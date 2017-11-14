@@ -293,6 +293,76 @@ CapVelLow:
 ;***************************************************************
 ;* Subroutines
 ;***************************************************************
+StateSwitch:
+	LOAD State
+	JNEG PreCalc
+	JZERO NorthsideSweep
+	SUB	One
+	JZERO NorthsideE2W
+	LOAD State
+	SUB Two
+	JZERO WestsideN2S
+	LOAD State
+	SUB Three
+	JZERO SouthsideW2E
+	LOAD State
+	SUB Four
+	JZERO SouthsideSweep
+	LOAD State
+	SUB Five
+	JZERO SouthsideE2W
+	LOAD State
+	SUB Six
+	JZERO WestsideS2N
+	LOAD State
+	SUB Seven
+	JZERO NorthsideW2E
+	;if we get here, something has broken, so kill everything
+	JUMP Die
+
+PreCalc:
+	;TO-DO
+	;calculates minor changes to the arena based on the baffle's vertical position
+	
+NorthsideSweep:
+	;TO-DO
+	;execute the 180 degree scan above the baffle
+	
+NorthsideE2W:
+	;TO-DO
+	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
+
+WestsideN2S:
+	;TO-DO
+	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+
+SouthsideW2E:
+	;TO-DO
+	;Move east, follow baffle,  stop after moving ~12 inches past the edge
+
+SouthsideSweep:
+	;TO-DO
+	;Execute 180 degree scan below the baffle
+
+
+SouthsideE2W:
+	;TO-DO
+	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
+
+
+WestsideS2N:
+	;TO-DO
+	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+
+
+NorthsideW2E:
+	;TO-DO
+	;Move south, follow baffle, stop after moving ~12 inches past the edge
+
+
+
+
+
 SonarCycleSetup:
 	LOAD 	Mask0
 	OUT 	SONAREN
@@ -825,8 +895,9 @@ I2CError:
 ;***************************************************************
 ;* Variables
 ;***************************************************************
-Temp:     DW 0 ; "Temp" is not a great name, but can be useful
-CurrSonar: DW 0 ; Iterative sonar counter.
+Temp:	     DW 0 ; "Temp" is not a great name, but can be useful
+CurrSonar:	 DW 0 ; Iterative sonar counter.
+State: 		 DW -1 ; state tracking variable; max: 7
 
 ;***************************************************************
 ;* Constants
