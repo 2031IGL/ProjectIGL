@@ -326,7 +326,24 @@ PreCalc:
 	
 NorthsideSweep:
 	;TO-DO
-	;execute the 180 degree scan above the baffle
+	;execute the 180 degree scan above the baffle	
+	; turn left 180 degrees
+	LOADI  0
+	STORE  DVel
+	LOADI  180
+	STORE  DTheta
+	; Note that we waited until *at* 1 m to do anything, and we
+	; didn't let the robot stop moving forward before telling it to turn,
+	; so it will likely move well past 1 m.  This code isn't
+	; meant to be precise.
+stillTurning:
+	CALL   GetThetaErr 		; get the heading error
+	CALL   Abs         		; absolute value subroutine
+	OUT    LCD        	 	; Display |angle error| for debugging
+	ADDI   -3         	 	; check if within 5 degrees of target angle
+	JPOS   stillTurning     ; if not, keep testing
+	; the robot is now within 5 degrees of 90
+	
 	
 NorthsideE2W:
 	;TO-DO
