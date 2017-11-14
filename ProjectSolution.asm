@@ -845,6 +845,17 @@ Eight:    DW 8
 Nine:     DW 9
 Ten:      DW 10
 
+;Distances from the patrol path to the baffle walls
+
+
+BaffWallLowBound:	DW &H032D	;distance to horizontal wall, lower bound: 32", upper bound: 40", ideal: 36"
+BaffleMargin:		DW &H00CB	;margin of error: 8"
+TBarLowBound:		DW &H00CB	;distance to T-Bar wall, lower bound: 8", upper bound: 16", ideal: 12"
+TBarEdgeLowBound:	DW &H00CB	;distance to T-Bar end, lower bound: 8", upper bound: 16", ideal: 12"
+
+
+
+
 ; Some bit masks.
 ; Masks of multiple bits can be constructed by ORing these
 ; 1-bit masks together.
