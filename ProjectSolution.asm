@@ -14,6 +14,8 @@ ORG 0                  ; Jump table is located in mem 0-4
 ;***************************************************************
 ;* Initialization
 ;***************************************************************
+
+;;This is a test of the GitHub GUI to make sure my shenanigans don't go unnoticed. :) <3
 Init:
 	; Always a good idea to make sure the robot
 	; stops in the event of a reset.
@@ -67,9 +69,12 @@ WaitForUser:
 Main:
 	CALL SonarCycleSetup
 	CALL Die
+	
+	
+	
 ;	OUT    RESETPOS    ; reset odometer in case wheels moved after programming
 	
-	; configure timer interrupts to enable the movement control code
+; configure timer interrupts to enable the movement control code
 ;	LOADI  10          ; fire at 10 Hz (10 ms * 10).
 ;	OUT    CTIMER      ; turn on timer peripheral
 ;	SEI    &B0010      ; enable interrupts from source 2 (timer)
