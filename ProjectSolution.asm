@@ -26,14 +26,14 @@ Init:
 	STORE  DTheta
 	OUT    SONAREN     ; Disable sonar (optional)
 	OUT    BEEP        ; Stop any beeping (optional)
-	
+
 	CALL   SetupI2C    ; Configure the I2C to read the battery voltage
 	CALL   BattCheck   ; Get battery voltage (and end if too low).
 	OUT    LCD         ; Display battery voltage (hex, tenths of volts)
 
 	LOADI  &H130
 	OUT    BEEP        ; Short hello beep
-	
+
 WaitForSafety:
 	; This loop will wait for the user to toggle SW17.  Note that
 	; SCOMP does not have direct access to SW17; it only has access
@@ -46,7 +46,7 @@ WaitForSafety:
 	SHIFT  8           ; Shift over to LED17
 	OUT    XLEDS       ; LED17 blinks at 2.5Hz (10Hz/4)
 	JUMP   WaitForSafety
-	
+
 WaitForUser:
 	; This loop will wait for the user to press PB3, to ensure that
 	; they have a chance to prepare for any movement in the main code.
@@ -69,11 +69,11 @@ WaitForUser:
 Main:
 	CALL SonarCycleSetup
 	CALL Die
-	
-	
-	
+
+
+
 ;	OUT    RESETPOS    ; reset odometer in case wheels moved after programming
-	
+
 ; configure timer interrupts to enable the movement control code
 ;	LOADI  10          ; fire at 10 Hz (10 ms * 10).
 ;	OUT    CTIMER      ; turn on timer peripheral
@@ -82,9 +82,9 @@ Main:
 	; code in that ISR will attempt to control the robot.
 	; If you want to take manual control of the robot,
 	; execute CLI &B0010 to disable the timer interrupt.
-	
 
-; As a quick demo of the movement control, the robot is 
+
+; As a quick demo of the movement control, the robot is
 ; directed to
 ; - move forward ~1 m at a medium speed,
 ; - turn left 90 degrees,
@@ -98,7 +98,7 @@ Main:
 	; The robot should automatically start moving,
 	; trying to match these desired parameters, because
 	; the movement API is active.
-	
+
 Test1:  ; P.S. "Test1" is a terrible, non-descriptive label
 ;	IN     XPOS        ; X position from odometry
 ;	OUT    LCD         ; Display X position for debugging
@@ -121,7 +121,7 @@ Test2:
 ;	ADDI   -5          ; check if within 5 degrees of target angle
 ;	JPOS   Test2       ; if not, keep testing
 ;	; the robot is now within 5 degrees of 90
-	
+
 ;	LOAD   FSlow       ; defined below as 100
 ;	STORE  DVel
 ;
@@ -149,7 +149,7 @@ Test2:
 ;	CALL   Atan2       ; Gets the angle from (0,0) to (AtanX,AtanY)
 ;	STORE  DTheta
 ;	OUT    SSEG1       ; Display angle for debugging
-	
+
 	; The following bit of code uses another provided subroutine,
 	; L2Estimate, the calculate the distance to (0,0).  Once again,
 	; the origin is a degenerative case, but adding a bit more math can
@@ -192,8 +192,8 @@ Forever:
 CTimer_ISR:
 	CALL   ControlMovement
 	RETI   ; return from ISR
-	
-	
+
+
 ; Control code.  If called repeatedly, this code will attempt
 ; to control the robot to face the angle specified in DTheta
 ; and match the speed specified in DVel
@@ -213,7 +213,7 @@ ControlMovement:
 	ADD    CMAErr
 	STORE  CMAErr      ; now contains a desired differential
 
-	
+
 	; For this basic control method, simply take the
 	; desired forward velocity and add the differential
 	; velocity for each wheel when turning is needed.
@@ -298,14 +298,14 @@ SonarCycleSetup:
 	OUT 	SONAREN
 	STORE 	CurrSonar
 SonarLoop:
-	;detect sonar that is on: TODO	
-	CALL SonarSwitch	
+	;detect sonar that is on: TODO
+	CALL SonarSwitch
 	;detect button press
 	IN 		XIO
 	AND		Mask2 ; isolate PB3
 	SUB		Four
 	JNEG	SonarCycle
-	JUMP 	SonarLoop	
+	JUMP 	SonarLoop
 SonarCycle:
 	LOAD 	CurrSonar
 	ADDI 	One
@@ -347,35 +347,35 @@ SonarSwitch:
 	JZERO	Switch7
 Switch0:
 	IN		DIST0
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch1:
 	IN		DIST1
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch2:
 	IN		DIST2
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch3:
 	IN		DIST3
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch4:
 	IN		DIST4
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch5:
 	IN		DIST5
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch6:
 	IN		DIST6
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 Switch7:
 	IN		DIST7
-	OUT		LCD	
+	OUT		LCD
 	RETURN
 
 ;*******************************************************************************
@@ -446,10 +446,10 @@ A2_R1n: ; region 1 negative
 	ADDI   360          ; Add 360 if we are in octant 8
 	RETURN
 A2_R3: ; region 3
-	CALL   A2_calc      ; Octants 4, 5            
+	CALL   A2_calc      ; Octants 4, 5
 	ADDI   180          ; theta' = theta + 180
 	RETURN
-A2_sw: ; switch arguments; octants 2, 3, 6, 7 
+A2_sw: ; switch arguments; octants 2, 3, 6, 7
 	LOAD   AtanY        ; Swap input arguments
 	STORE  AtanT
 	LOAD   AtanX
@@ -560,10 +560,10 @@ Mult16s:
 	STORE  mres16sH     ; clear result
 	LOADI  16           ; load 16 to counter
 Mult16s_loop:
-	STORE  mcnt16s      
+	STORE  mcnt16s
 	LOAD   m16sc        ; check the carry (from previous iteration)
 	JZERO  Mult16s_noc  ; if no carry, move on
-	LOAD   mres16sH     ; if a carry, 
+	LOAD   mres16sH     ; if a carry,
 	ADD    m16sA        ;  add multiplicand to result H
 	STORE  mres16sH
 Mult16s_noc: ; no carry
@@ -663,7 +663,7 @@ Div16s_neg:
 	LOAD   dres16sQ     ; need to negate the result
 	CALL   Neg
 	STORE  dres16sQ
-	RETURN	
+	RETURN
 d16sN: DW 0 ; numerator
 d16sD: DW 0 ; denominator
 d16sS: DW 0 ; sign value
@@ -780,7 +780,7 @@ DeadBatt:
 	OUT    XLEDS
 	CALL   Wait1       ; 1 second
 	JUMP   DeadBatt    ; repeat forever
-	
+
 ; Subroutine to read the A/D (battery voltage)
 ; Assumes that SetupI2C has been run
 GetBattLvl:
@@ -802,7 +802,7 @@ SetupI2C:
 	OUT    I2C_RDY     ; start the communication
 	CALL   BlockI2C    ; wait for it to finish
 	RETURN
-	
+
 ; Subroutine to block until I2C device is idle
 BlockI2C:
 	LOAD   Zero
@@ -826,7 +826,7 @@ I2CError:
 ;* Variables
 ;***************************************************************
 Temp:     DW 0 ; "Temp" is not a great name, but can be useful
-CurrSonar: DW 0 ; Iterative sonar counter. 
+CurrSonar: DW 0 ; Iterative sonar counter.
 
 ;***************************************************************
 ;* Constants
