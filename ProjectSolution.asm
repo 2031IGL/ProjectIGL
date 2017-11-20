@@ -31,7 +31,7 @@ Init:
 	CALL   BattCheck   ; Get battery voltage (and end if too low).
 	OUT    LCD         ; Display battery voltage (hex, tenths of volts)
 
-	LOADI  &H130
+	ILOAD  &H130
 	OUT    BEEP        ; Short hello beep
 
 WaitForSafety:
@@ -75,7 +75,7 @@ Main:
 ;	OUT    RESETPOS    ; reset odometer in case wheels moved after programming
 
 ; configure timer interrupts to enable the movement control code
-;	LOADI  10          ; fire at 10 Hz (10 ms * 10).
+;	ILOAD  10          ; fire at 10 Hz (10 ms * 10).
 ;	OUT    CTIMER      ; turn on timer peripheral
 ;	SEI    &B0010      ; enable interrupts from source 2 (timer)
 	; at this point, timer interrupts will be firing at 10Hz, and
@@ -91,7 +91,7 @@ Main:
 ; - move forward ~1 m at a slow speed,
 ; - move back towards (0,0) at a fast speed.
 
-;	LOADI  0
+;	ILOAD  0
 ;	STORE  DTheta      ; Desired angle 0
 ;	LOAD   FMid        ; Defined below as 350.
 ;	STORE  DVel        ; Desired forward velocity
@@ -106,9 +106,9 @@ Test1:  ; P.S. "Test1" is a terrible, non-descriptive label
 ;	JNEG   Test1       ; Not there yet, keep checking
 
 	; turn left 90 degrees
-;	LOADI  0
+;	ILOAD  0
 ;	STORE  DVel
-;	LOADI  90
+;	ILOAD  90
 ;	STORE  DTheta
 ;	; Note that we waited until *at* 1 m to do anything, and we
 	; didn't let the robot stop moving forward before telling it to turn,
@@ -165,7 +165,7 @@ Test2:
 ;	; robot is now near the origin
 
 	; done
-;	LOADI  0
+;	ILOAD  0
 ;	STORE  DVel
 ;	JUMP   Die
 ;
@@ -200,7 +200,7 @@ CTimer_ISR:
 DTheta:    DW 0
 DVel:      DW 0
 ControlMovement:
-	LOADI  50          ; used for the CapValue subroutine
+	ILOAD  50          ; used for the CapValue subroutine
 	STORE  MaxVal
 	CALL   GetThetaErr ; get the heading error
 	; A simple way to get a decent velocity value
@@ -217,7 +217,7 @@ ControlMovement:
 	; For this basic control method, simply take the
 	; desired forward velocity and add the differential
 	; velocity for each wheel when turning is needed.
-	LOADI  510
+	ILOAD  510
 	STORE  MaxVal
 	LOAD   DVel
 	CALL   CapValue    ; ensure velocity is valid
@@ -294,90 +294,98 @@ CapVelLow:
 ;* Subroutines
 ;***************************************************************
 StateSwitch:
-	LOAD State
-	JNEG PreCalc
-	JZERO NorthsideSweep
-	SUB	One
-	JZERO NorthsideE2W
-	LOAD State
-	SUB Two
-	JZERO WestsideN2S
-	LOAD State
-	SUB Three
-	JZERO SouthsideW2E
-	LOAD State
-	SUB Four
-	JZERO SouthsideSweep
-	LOAD State
-	SUB Five
-	JZERO SouthsideE2W
-	LOAD State
-	SUB Six
-	JZERO WestsideS2N
-	LOAD State
-	SUB Seven
-	JZERO NorthsideW2E
+	LOAD 	State
+	JNEG 	PreCalc
+	JZERO 	NorthsideSweep
+	SUB 	One
+	JZERO 	NorthsideE2W
+	LOAD 	State
+	SUB 	Two
+	JZERO 	WestsideN2S
+	LOAD 	State
+	SUB 	Three
+	JZERO 	SouthsideW2E
+	LOAD 	State
+	SUB 	Four
+	JZERO 	SouthsideSweep
+	LOAD 	State
+	SUB 	Five
+	JZERO 	SouthsideE2W
+	LOAD 	State
+	SUB 	Six
+	JZERO 	WestsideS2N
+	LOAD 	State
+	SUB 	Seven
+	JZERO 	NorthsideW2E
 	;if we get here, something has broken, so kill everything
-	JUMP Die
+	JUMP 	Die
+;end of stateswitch
 
 PreCalc:
 	;TO-DO
 	;calculates minor changes to the arena based on the baffle's vertical position
+	NOP
 	
 NorthsideSweep:
 	;TO-DO
 	;execute the 180 degree scan above the baffle	
 	; turn left 180 degrees
-	LOADI  0
+	ILOAD 	0
 	STORE  DVel
-	LOADI  180
+	ILOAD  180
 	STORE  DTheta
 	; Note that we waited until *at* 1 m to do anything, and we
 	; didn't let the robot stop moving forward before telling it to turn,
 	; so it will likely move well past 1 m.  This code isn't
 	; meant to be precise.
-stillTurning:
+StillTurning:
 	CALL   GetThetaErr 		; get the heading error
 	CALL   Abs         		; absolute value subroutine
 	OUT    LCD        	 	; Display |angle error| for debugging
 	ADDI   -3         	 	; check if within 5 degrees of target angle
-	JPOS   stillTurning     ; if not, keep testing
+	JPOS   StillTurning     ; if not, keep testing
 	; the robot is now within 5 degrees of 90
 	
 	
 NorthsideE2W:
 	;TO-DO
 	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
+	NOP
 
 WestsideN2S:
 	;TO-DO
 	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+	NOP
 
 SouthsideW2E:
 	;TO-DO
 	;Move east, follow baffle,  stop after moving ~12 inches past the edge
+	NOP
 
 SouthsideSweep:
 	;TO-DO
 	;Execute 180 degree scan below the baffle
+	NOP
 
 
 SouthsideE2W:
 	;TO-DO
 	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
+	NOP
 
 
 WestsideS2N:
 	;TO-DO
 	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+	NOP
 
 
 NorthsideW2E:
 	;TO-DO
 	;Move south, follow baffle, stop after moving ~12 inches past the edge
+	NOP
 
-
-
+;end of states
 
 
 SonarCycleSetup:
@@ -602,7 +610,7 @@ A2_mult: ; multiply, and return bits 23..8 of result
 	OR     mres16sH     ; combine high and low words of result
 	RETURN
 A2_div: ; 16-bit division scaled by 256, minimizing error
-	LOADI  9            ; loop 8 times (256 = 2^8)
+	ILOAD  9            ; loop 8 times (256 = 2^8)
 	STORE  AtanT
 A2_DL:
 	LOAD   AtanT
@@ -642,10 +650,10 @@ A2cd:       DW 14668    ; = 180/pi with 8 fractional bits
 ; - Result is stored in mres16sH and mres16sL (high and low words).
 ;*******************************************************************************
 Mult16s:
-	LOADI  0
+	ILOAD  0
 	STORE  m16sc        ; clear carry
 	STORE  mres16sH     ; clear result
-	LOADI  16           ; load 16 to counter
+	ILOAD  16           ; load 16 to counter
 Mult16s_loop:
 	STORE  mcnt16s
 	LOAD   m16sc        ; check the carry (from previous iteration)
@@ -698,13 +706,13 @@ mres16sH: DW 0 ; result high
 ; Requires Abs subroutine
 ;*******************************************************************************
 Div16s:
-	LOADI  0
+	ILOAD  0
 	STORE  dres16sR     ; clear remainder result
 	STORE  d16sC1       ; clear carry
 	LOAD   d16sN
 	XOR    d16sD
 	STORE  d16sS        ; sign determination = N XOR D
-	LOADI  17
+	ILOAD  17
 	STORE  d16sT        ; preload counter with 17 (16+1)
 	LOAD   d16sD
 	CALL   Abs          ; take absolute value of denominator
@@ -731,13 +739,13 @@ Div16s_loop:
 	SUB    d16sD        ; subtract denominator from remainder
 	JNEG   Div16s_add   ; if negative, need to add it back
 	STORE  dres16sR
-	LOADI  1
+	ILOAD  1
 	STORE  d16sC1       ; set carry
 	JUMP   Div16s_loop
 Div16s_add:
 	ADD    d16sD        ; add denominator back in
 	STORE  dres16sR
-	LOADI  0
+	ILOAD  0
 	STORE  d16sC1       ; clear carry
 	JUMP   Div16s_loop
 Div16s_sign:
@@ -785,7 +793,7 @@ L2Estimate:
 CalcDist:
 	; Calculation is max(X,Y)*0.961+min(X,Y)*0.406
 	STORE  m16sa
-	LOADI  246       ; max * 246
+	ILOAD  246       ; max * 246
 	STORE  m16sB
 	CALL   Mult16s
 	LOAD   mres16sH
@@ -798,7 +806,7 @@ CalcDist:
 	STORE  L2T3
 	LOAD   L2T1
 	STORE  m16sa
-	LOADI  104       ; min * 104
+	ILOAD  104       ; min * 104
 	STORE  m16sB
 	CALL   Mult16s
 	LOAD   mres16sH
@@ -849,7 +857,7 @@ BattCheck:
 ; If the battery is too low, we want to make
 ; sure that the user realizes it...
 DeadBatt:
-	LOADI  &H20
+	ILOAD  &H20
 	OUT    BEEP        ; start beep sound
 	CALL   GetBattLvl  ; get the battery level
 	OUT    SSEG1       ; display it everywhere
@@ -860,7 +868,7 @@ DeadBatt:
 	OUT    LEDS        ; all LEDs on
 	OUT    XLEDS
 	CALL   Wait1       ; 1 second
-	LOADI  &H140       ; short, high-pitched beep
+	ILOAD  &H140       ; short, high-pitched beep
 	OUT    BEEP        ; stop beeping
 	LOAD   Zero
 	OUT    LEDS        ; LEDs off
