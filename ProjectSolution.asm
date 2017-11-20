@@ -99,7 +99,7 @@ Main:
 	; trying to match these desired parameters, because
 	; the movement API is active.
 
-Test1:  ; P.S. "Test1" is a terrible, non-descriptive label
+;Test1:  ; P.S. "Test1" is a terrible, non-descriptive label
 ;	IN     XPOS        ; X position from odometry
 ;	OUT    LCD         ; Display X position for debugging
 ;	SUB    OneMeter    ; Defined below as the robot units for 1 m
@@ -114,7 +114,7 @@ Test1:  ; P.S. "Test1" is a terrible, non-descriptive label
 	; didn't let the robot stop moving forward before telling it to turn,
 	; so it will likely move well past 1 m.  This code isn't
 	; meant to be precise.
-Test2:
+;Test2:
 ;	CALL   GetThetaErr ; get the heading error
 ;	CALL   Abs         ; absolute value subroutine
 ;	OUT    LCD         ; Display |angle error| for debugging
@@ -321,6 +321,24 @@ StateSwitch:
 	JUMP 	Die
 ;end of stateswitch
 
+BaffleTrigger:
+	ILOAD 	0
+	STORE	DVel
+	CALL	StateAdvance
+	
+	
+StateAdvance:
+	LOAD	State
+	SUB 	StateMax
+	JZERO	NoWrap
+	JUMP	WrapUp
+NoWrap:
+	LOAD 	State
+	ADDI	1
+WrapUp:
+	STORE	State
+	RETURN
+
 PreCalc:
 	;TO-DO
 	;calculates minor changes to the arena based on the baffle's vertical position
@@ -334,10 +352,6 @@ NorthsideSweep:
 	STORE  DVel
 	ILOAD  180
 	STORE  DTheta
-	; Note that we waited until *at* 1 m to do anything, and we
-	; didn't let the robot stop moving forward before telling it to turn,
-	; so it will likely move well past 1 m.  This code isn't
-	; meant to be precise.
 StillTurning:
 	CALL   GetThetaErr 		; get the heading error
 	CALL   Abs         		; absolute value subroutine
@@ -943,11 +957,16 @@ Ten:      DW 10
 
 ;Distances from the patrol path to the baffle walls
 
-
-BaffWallLowBound:	DW &H032D	;distance to horizontal wall, lower bound: 32", upper bound: 40", ideal: 36"
-BaffleMargin:		DW &H00CB	;margin of error: 8"
-TBarLowBound:		DW &H00CB	;distance to T-Bar wall, lower bound: 8", upper bound: 16", ideal: 12"
-TBarEdgeLowBound:	DW &H00CB	;distance to T-Bar end, lower bound: 8", upper bound: 16", ideal: 12"
+StateMax:
+		DW 7
+BaffWallLowBound:	
+		DW &H032D	;distance to horizontal wall, lower bound: 32", upper bound: 40", ideal: 36"
+BaffleMargin:		
+		DW &H00CB	;margin of error: 8"
+TBarLowBound:		
+		DW &H00CB	;distance to T-Bar wall, lower bound: 8", upper bound: 16", ideal: 12"
+TBarEdgeLowBound:	
+		DW &H00CB	;distance to T-Bar end, lower bound: 8", upper bound: 16", ideal: 12"
 
 
 
