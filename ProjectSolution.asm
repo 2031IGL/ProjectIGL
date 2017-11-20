@@ -6,7 +6,7 @@
 ORG 0                  ; Jump table is located in mem 0-4
 ; This code uses the timer interrupt for the control code.
 	JUMP   Init        ; Reset vector
-	RETI               ; Sonar interrupt (unused)
+	JUMP   BaffleTrigger               ; Sonar interrupt 
 	JUMP   CTimer_ISR  ; Timer interrupt
 	RETI               ; UART interrupt (unused)
 	RETI               ; Motor stall interrupt (unused)
@@ -67,7 +67,7 @@ WaitForUser:
 ;* Main code
 ;***************************************************************
 Main:
-	CALL SonarCycleSetup
+	CALL Precalc
 	CALL Die
 
 
@@ -321,12 +321,15 @@ StateSwitch:
 	JUMP 	Die
 ;end of stateswitch
 
-BaffleTrigger:
+
+;Sonar interrupt proceeds here. Increment the state variable, then enter switch gauntlet
+BaffleTrigger:		
 	ILOAD 	0
 	STORE	DVel
 	CALL	StateAdvance
+	JUMP	StateSwitch
 	
-	
+;advances state variable. Wraps around back to zero if greater than max size
 StateAdvance:
 	LOAD	State
 	SUB 	StateMax
@@ -342,29 +345,49 @@ WrapUp:
 PreCalc:
 	;TO-DO
 	;calculates minor changes to the arena based on the baffle's vertical position
-	NOP
+	JUMP	PostCalcWaitCycle
+	
+PostCalcWaitCycle:
+	; This loop will wait for the user to press PB3, to ensure that
+	; they have a chance to prepare for any movement in the main code.
+	IN     TIMER       ; Used to blink the LEDs above PB3
+	AND    Mask1
+	SHIFT  5           ; Both LEDG6 and LEDG7
+	STORE  Temp        ; (overkill, but looks nice)
+	SHIFT  1
+	OR     Temp
+	OUT    XLEDS
+	IN     XIO         ; XIO contains KEYs
+	AND    Mask2       ; KEY3 mask (KEY0 is reset and can't be read)
+	JPOS   PostCalcWaitCycle ; not ready (KEYs are active-low, hence JPOS)
+	LOAD   Zero
+	OUT    XLEDS       ; clear LEDs once ready to continue
+	JUMP	StateSwitch
 	
 NorthsideSweep:
 	;TO-DO
 	;execute the 180 degree scan above the baffle	
 	; turn left 180 degrees
+	CLI		SonarInterruptMask
 	ILOAD 	0
 	STORE  DVel
 	ILOAD  180
 	STORE  DTheta
-StillTurning:
-	CALL   GetThetaErr 		; get the heading error
-	CALL   Abs         		; absolute value subroutine
-	OUT    LCD        	 	; Display |angle error| for debugging
-	ADDI   -3         	 	; check if within 5 degrees of target angle
-	JPOS   StillTurning     ; if not, keep testing
-	; the robot is now within 5 degrees of 90
+	CALL	StillTurning
+	LOAD	FMid
+	STORE	DVel
+	OUT 	TIMER
+NSSTimer:
+	IN		TIMER
+	SUB		BafflePointMark
+	SEI		SonarInterruptMask
+
 	
 	
 NorthsideE2W:
 	;TO-DO
 	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
-	NOP
+	
 
 WestsideN2S:
 	;TO-DO
@@ -400,6 +423,16 @@ NorthsideW2E:
 	NOP
 
 ;end of states
+
+;turns to DTheta at DVel based on internal odometry
+StillTurning:
+	CALL   GetThetaErr 		; get the heading error
+	CALL   Abs         		; absolute value subroutine
+	OUT    LCD        	 	; Display |angle error| for debugging
+	ADDI   -3         	 	; check if within 5 degrees of target angle
+	JPOS   StillTurning     ; if not, keep testing
+	; the robot is now within 5 degrees of 90
+	RETURN
 
 
 SonarCycleSetup:
@@ -936,7 +969,7 @@ I2CError:
 ;***************************************************************
 Temp:	     DW 0 ; "Temp" is not a great name, but can be useful
 CurrSonar:	 DW 0 ; Iterative sonar counter.
-State: 		 DW -1 ; state tracking variable; max: 7
+State: 		 DW 0 ; state tracking variable; max: 7
 
 ;***************************************************************
 ;* Constants
@@ -955,10 +988,14 @@ Eight:    DW 8
 Nine:     DW 9
 Ten:      DW 10
 
-;Distances from the patrol path to the baffle walls
-
 StateMax:
 		DW 7
+SonarInterruptMask:
+		DW &B1000
+BafflePointMark:
+		DW 30
+;Distances from the patrol path to the baffle walls
+
 BaffWallLowBound:	
 		DW &H032D	;distance to horizontal wall, lower bound: 32", upper bound: 40", ideal: 36"
 BaffleMargin:		
