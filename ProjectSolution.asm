@@ -427,6 +427,7 @@ TrigSection:
 	STORE	SEPointSECorner
 ShortCalc:
 	; storing deltas for rotational sonar reading ease of use
+	; hello
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
