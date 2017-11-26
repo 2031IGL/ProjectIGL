@@ -355,7 +355,7 @@ PreCalc:
 	LOADI	75
 	SUB		WallVar
 	JPOS	FullCalc
-	JUMP	SkipCalc
+	JUMP	ShortCalc
 FullCalc:
 	LOAD	NPathNWall
 	SUB		WallVar
@@ -372,7 +372,62 @@ FullCalc:
 	LOAD	SPathCloseWall
 	ADD		WallVar
 	STORE	SPathCloseWall
-SkipCalc:
+TrigSection:
+	LOAD	NPathNWall
+	CALL	SecondPower
+	STORE	Temp
+	LOAD	NEPointBoundary
+	CALL	SecondPower
+	ADD		Temp
+	CALL	RootTwo
+	STORE	NEPointNECorner
+	;line break for my sanity
+	LOAD	NPathNWall
+	CALL	SecondPower
+	STORE	Temp
+	LOAD	WPathWWall
+	CALL	SecondPower
+	ADD		Temp
+	CALL	RootTwo
+	STORE	NWPointNCorner
+	;line break for my sanity
+	LOADI	&H542
+	CALL	SecondPower
+	STORE	Temp
+	LOAD	WPathWWall
+	CALL	SecondPower
+	ADD		Temp
+	CALL	RootTwo
+	STORE	NWPointWCorner
+	;line break for my sanity
+	LOADI	&H6D8
+	CALL	SecondPower
+	STORE	Temp
+	LOAD	WPathWWall
+	CALL	SecondPower
+	ADD		Temp
+	CALL	RootTwo
+	STORE	SWPointWCorner
+	;line break for my sanity
+	LOAD	SPathCloseWall
+	CALL	SecondPower
+	STORE	Temp
+	LOADI	&H379
+	CALL	SecondPower
+	ADD		Temp
+	CALL	RootTwo
+	STORE	SWPointSCorner
+	;line break for my sanity
+	LOAD	SEPointBoundary
+	CALL	SecondPower
+	STORE	Temp
+	LOAD	SPathFarWall
+	CALL	SecondPower
+	ADD		Temp
+	CALL	RootTwo
+	STORE	SEPointSECorner
+ShortCalc:
+	
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
@@ -547,7 +602,51 @@ Switch7:
 	IN		DIST7
 	OUT		LCD
 	RETURN
-
+	
+;********************
+;Raise to 2nd power
+;By Kyle Hosford
+;********************
+SecondPower:
+	STORE	m16sA
+	STORE	m16sB
+	CALL 	Mult16s
+	LOAD	mres16sH
+	RETURN
+	
+;********************************
+; Babylonian Square Root Algorithm (Root 2)
+; Written by Kyle Hosford, Fall 2017
+; Calculates square root of AC value
+; Recurses until value has converged
+;********************************
+RootTwo:
+	;Setup
+	STORE	InitNum
+	SHIFT	-2
+	STORE	RootX0 ;use 1/4 IN number as arbitrary positive starting point
+RootRecurse:
+	LOAD	InitNum
+	STORE	d16sN
+	LOAD	RootX0
+	STORE	d16sD
+	CALL	Div16s ; S / X0
+	LOAD	dres16sQ
+	ADD		RootX0 ; + X0
+	SHIFT	-1 ; divide by 2
+	STORE	RootX1
+	AND		RootX0 ; check against previous iteration
+	SUB		RootX0
+	JZERO	RootFinish ; if they're the same, we're done. Otherwise, keep chugging
+	LOAD	RootX1
+	STORE	RootX0
+	JUMP	RootRecurse
+RootFinish:
+	LOAD	RootX1
+	RETURN
+InitNum:	DW 0
+RootX1:		DW 0
+RootX0: 	DW 0
 ;*******************************************************************************
 ; Mod360: modulo 360
 ; Returns AC%360 in AC
