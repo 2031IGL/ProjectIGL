@@ -6,7 +6,7 @@
 ORG 0                  ; Jump table is located in mem 0-4
 ; This code uses the timer interrupt for the control code.
 	JUMP   Init        ; Reset vector
-	JUMP   BaffleTrigger               ; Sonar interrupt 
+	RETI               ; Sonar interrupt 
 	JUMP   CTimer_ISR  ; Timer interrupt
 	RETI               ; UART interrupt (unused)
 	RETI               ; Motor stall interrupt (unused)
@@ -345,6 +345,34 @@ WrapUp:
 PreCalc:
 	;TO-DO
 	;calculates minor changes to the arena based on the baffle's vertical position
+	LOAD	Mask0
+	OUT 	SONAREN
+	IN 		DIST0
+	STORE	WallVar
+	LOAD	NPathNWall
+	SUB		WallVar
+	STORE	WallVar
+	LOADI	75
+	SUB		WallVar
+	JPOS	FullCalc
+	JUMP	SkipCalc
+FullCalc:
+	LOAD	NPathNWall
+	SUB		WallVar
+	STORE	NPathNWall
+	LOAD	SPathNWall
+	SUB		WallVar
+	STORE	SPathNWall
+	LOAD	NPathSWall
+	ADD		WallVar
+	STORE	NPathSWall
+	LOAD	SPathFarWall
+	ADD		WallVar
+	STORE	SPathFarWall
+	LOAD	SPathCloseWall
+	ADD		WallVar
+	STORE	SPathCloseWall
+SkipCalc:
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
@@ -970,6 +998,8 @@ I2CError:
 Temp:	     DW 0 ; "Temp" is not a great name, but can be useful
 CurrSonar:	 DW 0 ; Iterative sonar counter.
 State: 		 DW 0 ; state tracking variable; max: 7
+BaffleVar:	 DW 0 ;variable for baffle calculations
+WallVar: 	 DW 0 ;variable for wall calculations
 
 ;***************************************************************
 ;* Constants
@@ -994,7 +1024,65 @@ SonarInterruptMask:
 		DW &B1000
 BafflePointMark:
 		DW 30
+SonarMaskZeroAndFive:
+		DW &B00100001
 ;Distances from the patrol path to the baffle walls
+
+NEPointNECorner:
+		DW &H895
+NEPointBoundary:
+		DW &H4C3
+NEPointBaffleOutCorner:
+		DW &H5F4
+NEPointBaffleInCorner:
+		DW &H3C4
+NEPointWWall:
+		DW &H7BD
+NPathBaffleWall:
+		DW &H392
+NPathBaffleEdge:
+		DW &H131
+NPathNWall:
+		DW &H725
+NPathSWall:
+		DW &HE4A
+NWPointNCorner:
+		DW &H7F1
+NWPointWCorner:
+		DW &H781
+WPathWWall:
+		DW &H55C
+WPathBoundary:
+		DW &H725
+WPathBaffleWall:
+		DW &H131
+SWPointWCorner:
+		DW &H8B1
+SWPointSCorner:
+		DW &HA1E
+SPathNWall:
+		DW &HE4A
+SPathFarWall:
+		DW &HE30
+SPathCloseWall:
+		DW &H96D
+SPathBaffleWall:
+		DW &H392
+SPathBaffleCorner:
+		DW &H131
+SEPointWWall:
+		DW &H7BD
+SEPointBaffleInCorner:
+		DW &H3C4
+SEPointBaffleOutCorner:
+		DW &H5F4
+SEPointBoundary:
+		DW &H4C3
+SEPointSECorner:
+		DW &HEF7
+
+
+
 
 BaffWallLowBound:	
 		DW &H032D	;distance to horizontal wall, lower bound: 32", upper bound: 40", ideal: 36"
