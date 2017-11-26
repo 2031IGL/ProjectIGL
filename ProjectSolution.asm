@@ -295,7 +295,6 @@ CapVelLow:
 ;***************************************************************
 StateSwitch:
 	LOAD 	State
-	JNEG 	PreCalc
 	JZERO 	NorthsideSweep
 	SUB 	One
 	JZERO 	NorthsideE2W
@@ -427,7 +426,7 @@ TrigSection:
 	CALL	RootTwo
 	STORE	SEPointSECorner
 ShortCalc:
-	
+	; storing deltas for rotational sonar reading ease of use
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
@@ -457,56 +456,8 @@ NorthsideSweep:
 	LOADI  180
 	STORE  DTheta
 	CALL	StillTurning
-	LOAD	FMid
-	STORE	DVel
-	OUT 	TIMER
-NSSTimer:
-	IN		TIMER
-	SUB		BafflePointMark
-	SEI		SonarInterruptMask
-
-	
-	
-NorthsideE2W:
-	;TO-DO
-	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
-	
-
-WestsideN2S:
-	;TO-DO
-	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
-	NOP
-
-SouthsideW2E:
-	;TO-DO
-	;Move east, follow baffle,  stop after moving ~12 inches past the edge
-	NOP
-
-SouthsideSweep:
-	;TO-DO
-	;Execute 180 degree scan below the baffle
-	NOP
-
-
-SouthsideE2W:
-	;TO-DO
-	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
-	NOP
-
-
-WestsideS2N:
-	;TO-DO
-	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
-	NOP
-
-
-NorthsideW2E:
-	;TO-DO
-	;Move south, follow baffle, stop after moving ~12 inches past the edge
-	NOP
-
-;end of states
-
+	CALL	StateAdvance
+	JUMP	StateSwitch
 ;turns to DTheta at DVel based on internal odometry
 StillTurning:
 	CALL   GetThetaErr 		; get the heading error
@@ -516,6 +467,101 @@ StillTurning:
 	JPOS   StillTurning     ; if not, keep testing
 	; the robot is now within 5 degrees of 90
 	RETURN
+	
+	
+NorthsideE2W:
+	;TO-DO
+	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
+	LOADI	&B00101101
+	OUT 	SONAREN
+	LOAD	FMid
+	STORE	DVel
+NPathE2WStillMoving:
+	IN		DIST2
+	STORE	Temp
+	IN		DIST3
+	ADD		Temp
+	SHIFT	-1
+	SUB		WPathWWall
+	JNEG	NPathE2WExit
+	JUMP	NPathE2WStillMoving
+NPathE2WExit:
+	LOADI	0
+	STORE	DVel
+	LOADI	270
+	STORE	DTheta
+	CALL	StillTurning
+	CALL	StateAdvance
+	JUMP	StateSwitch
+	
+
+WestsideN2S:
+	;TO-DO
+	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+	CALL	StateAdvance
+	JUMP	StateSwitch
+
+SouthsideW2E:
+	;TO-DO
+	;Move east, follow baffle,  stop after moving ~12 inches past the edge
+	CALL	StateAdvance
+	JUMP	StateSwitch
+
+SouthsideSweep:
+	;TO-DO
+	;Execute 180 degree scan below the baffle
+	CLI		SonarInterruptMask
+	LOADI 	0
+	STORE  DVel
+	LOADI  180
+	STORE  DTheta
+	CALL	StillTurning
+	CALL	StateAdvance
+	JUMP	StateSwitch
+
+
+SouthsideE2W:
+	;TO-DO
+	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
+	LOADI	&B00101101
+	OUT 	SONAREN
+	LOAD	FMid
+	STORE	DVel
+SPathE2WStillMoving:
+	IN		DIST2
+	STORE	Temp
+	IN		DIST3
+	ADD		Temp
+	SHIFT	-1
+	SUB		WPathWWall
+	JNEG	SPathE2WExit
+	JUMP	SPathE2WStillMoving
+SPathE2WExit:
+	LOAD	Zero
+	STORE	DVel
+	LOADI	270
+	STORE	DTheta
+	CALL	StillTurning
+	CALL	StateAdvance
+	JUMP	StateSwitch
+
+
+WestsideS2N:
+	;TO-DO
+	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+	CALL	StateAdvance
+	JUMP	StateSwitch
+
+
+NorthsideW2E:
+	;TO-DO
+	;Move south, follow baffle, stop after moving ~12 inches past the edge
+	CALL	StateAdvance
+	JUMP	StateSwitch
+
+;end of states
+
+
 
 
 SonarCycleSetup:
@@ -1094,11 +1140,12 @@ I2CError:
 ;***************************************************************
 ;* Variables
 ;***************************************************************
-Temp:	     DW 0 ; "Temp" is not a great name, but can be useful
-CurrSonar:	 DW 0 ; Iterative sonar counter.
-State: 		 DW 0 ; state tracking variable; max: 7
-BaffleVar:	 DW 0 ;variable for baffle calculations
-WallVar: 	 DW 0 ;variable for wall calculations
+Temp:	    DW 0 ; "Temp" is not a great name, but can be useful
+CurrSonar:	DW 0 ; Iterative sonar counter.
+State: 		DW 0 ; state tracking variable; max: 7
+BaffleVar:	DW 0 ;variable for baffle calculations
+WallVar: 	DW 0 ;variable for wall calculations
+ClockTimer:		DW 0
 
 ;***************************************************************
 ;* Constants
