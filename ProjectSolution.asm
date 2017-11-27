@@ -271,12 +271,32 @@ CourseCorrection:
 IntruderScan:
 	;TO-DO
 	;Handles expected measured distance based on state and "intrudercounter"
+	
 	;enables and reads sonar sensors 2 and 3 every 8th cycle 
 	LOAD	FrontScanCycle
-	AND		7
+	SUB		7
 	JZERO	NoScan
 	LOAD	State
-	LOADI	&B00
+	JZERO	NoScan
+	SUB		4
+	JZERO	NoScan
+	LOADI	&B00101101
+	OUT		SONAREN
+	OUT		DIST2
+	STORE	Temp
+	OUT		DIST3
+	ADD		Temp
+	SHIFT	-1
+	SUB		NoseDistance
+	JPOS	NoIntruderInFrontOfOurNose
+	CALL	IntruderAlert
+NoIntruderInFrontOfOurNose:
+	LOADI	&B00100001
+	OUT		SONAREN
+	RETURN
+NoseDistance:
+	DW		&H131
+
 NoScan:
 	CALL	IncrementFrontCycle
 	RETURN
@@ -628,6 +648,12 @@ ShortCalc:
 	CALL  	Atan2
 	STORE 	SEPTOutCBNTheta
 	;Put theta calculations here
+		LOAD  NPathBaffleWall
+		STORE AtanY
+		LOAD  NEPTInCBWLDelta
+		STORE AtanX
+		CALL  Atan2
+		STORE NEPTInCBWLTheta
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
