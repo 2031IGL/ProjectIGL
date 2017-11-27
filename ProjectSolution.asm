@@ -559,10 +559,53 @@ TimerBreak:
 	
 
 WestsideN2S:
-	;TO-DO
 	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+	LOADI	&B00001101
+	OUT		SONAREN
+	LOAD	FMid
+	STORE	DVel
+WestSideN2SPhase1:
+	IN		DIST0 ;load sonar reading again, check if baffle. If not baffle, then intruder
+	STORE	Temp
+	LOAD	WPathBaffleWall
+	ADDI	100
+	SUB		Temp
+	JPOS	WestSideN2SIntruderSkip
+	LOADI	&H724
+	STORE	Temp
+	IN		DIST0
+	SUB		Temp
+	JPOS	WestSideN2SPhase1
+	CALL	IntruderAlert
+WestSideN2SIntruderSkip:
+	OUT		TIMER
+WestSideN2SPhase2: ;traverse 48 inches due south
+	LOAD	WestSideN2SCounter
+	OR		Zero
+	JZERO	WestSideN2SPhase2Exit
+	SUB		One
+	STORE	WestSideN2SCounter
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	WestSideN2SPhase2
+WestSideN2SPhase2Exit:
+	OUT		TIMER
+WestSideN2SPhase3:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	WestSideN2SPhase3
+	LOADI	0
+	STORE	DVel
+	LOADI	180
+	STORE	DTheta
+	CALL	StillTurning
 	CALL	StateAdvance
 	JUMP	StateSwitch
+WestSideN2SCounter: DW 4
 
 SouthsideW2E:
 	;TO-DO
@@ -624,6 +667,14 @@ NorthsideW2E:
 
 ;end of states
 
+IntruderAlert:
+	LOADI	&H20
+	OUT		BEEP 
+	CALL	Wait1
+	LOADI	0
+	OUT		BEEP
+	RETURN
+	
 
 
 
