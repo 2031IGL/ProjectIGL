@@ -560,7 +560,7 @@ TimerBreak:
 
 WestsideN2S:
 	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
-	LOADI	&B00001101
+	LOADI	&B00000001
 	OUT		SONAREN
 	LOAD	FMid
 	STORE	DVel
@@ -610,16 +610,36 @@ WestSideN2SCounter: DW 4
 SouthsideW2E:
 	;TO-DO
 	;Move east, follow baffle,  stop after moving ~12 inches past the edge
+	LOADI	&B00100001
+	OUT		SONAREN
+	LOAD	FMid
+	STORE	DVel
+	OUT		TIMER
+SouthsideE2WLoop:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	SouthsideE2WLoop
+SouthsideE2WLoop2:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	SouthsideE2WLoop2
+	LOADI	0
+	STORE	DVel
+	STORE	DTheta
+	CALL	StillTurning
 	CALL	StateAdvance
 	JUMP	StateSwitch
 
 SouthsideSweep:
 	;TO-DO
 	;Execute 180 degree scan below the baffle
-	CLI		SonarInterruptMask
-	LOADI 	0
-	STORE  DVel
-	LOADI  180
+	LOADI	&B00000001
+	OUT		SONAREN
+	LOADI  360
 	STORE  DTheta
 	CALL	StillTurning
 	CALL	StateAdvance
@@ -629,23 +649,27 @@ SouthsideSweep:
 SouthsideE2W:
 	;TO-DO
 	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
-	LOADI	&B00101101
-	OUT 	SONAREN
+	LOADI	&B00100001
+	OUT		SONAREN
 	LOAD	FMid
 	STORE	DVel
-SPathE2WStillMoving:
-	IN		DIST2
+	OUT		TIMER
+SPathLoop1:
+	IN		TIMER
 	STORE	Temp
-	IN		DIST3
-	ADD		Temp
-	SHIFT	-1
-	SUB		WPathWWall
-	JNEG	SPathE2WExit
-	JUMP	SPathE2WStillMoving
-SPathE2WExit:
-	LOAD	Zero
-	STORE	DVel
-	LOADI	270
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	SPathLoop1
+	OUT		TIMER
+SPathLoop2:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	SPathLoop2
+	LOADI	0
+	STORE	DVel ;stahp
+	LOADI	-90
 	STORE	DTheta
 	CALL	StillTurning
 	CALL	StateAdvance
