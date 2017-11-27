@@ -492,11 +492,12 @@ NorthsideSweep:
 	;TO-DO
 	;execute the 180 degree scan above the baffle	
 	; turn left 180 degrees
-	CLI		SonarInterruptMask
-	LOADI 	0
-	STORE  DVel
-	LOADI  180
-	STORE  DTheta
+	LOADI	&B00100001
+	STORE	SONAREN
+	LOADI	0
+	STORE 	DVel
+	LOADI 	360
+	STORE 	DTheta
 	CALL	StillTurning
 	CALL	StateAdvance
 	JUMP	StateSwitch
@@ -560,7 +561,7 @@ TimerBreak:
 
 WestsideN2S:
 	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
-	LOADI	&B00000001
+	LOADI	&B00100001
 	OUT		SONAREN
 	LOAD	FMid
 	STORE	DVel
@@ -679,13 +680,78 @@ SPathLoop2:
 WestsideS2N:
 	;TO-DO
 	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
+	LOADI	&B00100001
+	OUT		SONAREN
+	LOAD	FMid
+	STORE	DVel
+WestSideS2NPhase1:
+	IN		DIST0 ;load sonar reading again, check if baffle. If not baffle, then intruder
+	STORE	Temp
+	LOAD	WPathBaffleWall
+	ADDI	100
+	SUB		Temp
+	JPOS	WestSideS2NIntruderSkip
+	LOADI	&H724
+	STORE	Temp
+	IN		DIST0
+	SUB		Temp
+	JPOS	WestSideS2NPhase1
+	CALL	IntruderAlert
+WestSideS2NIntruderSkip:
+	OUT		TIMER
+WestSideS2NPhase2: ;traverse 48 inches due south
+	LOAD	WestSideS2NCounter
+	OR		Zero
+	JZERO	WestSideS2NPhase2Exit
+	SUB		One
+	STORE	WestSideS2NCounter
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	WestSideS2NPhase2
+WestSideS2NPhase2Exit:
+	OUT		TIMER
+WestSideS2NPhase3:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	WestSideS2NPhase3
+	LOADI	0
+	STORE	DVel
+	LOADI	180
+	STORE	DTheta
+	CALL	StillTurning
 	CALL	StateAdvance
 	JUMP	StateSwitch
+WestSideS2NCounter: DW 4
 
 
 NorthsideW2E:
 	;TO-DO
 	;Move south, follow baffle, stop after moving ~12 inches past the edge
+	LOADI	&B00100001
+	OUT		SONAREN
+	LOAD	FMid
+	STORE	DVel
+	OUT		TIMER
+NorthsideW2ELoop:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	NorthsideW2ELoop
+NorthsideW2ELoop2:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	NorthsideW2ELoop2
+	LOADI	0
+	STORE	DVel
+	STORE	DTheta
+	CALL	StillTurning
 	CALL	StateAdvance
 	JUMP	StateSwitch
 
