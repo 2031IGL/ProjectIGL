@@ -512,29 +512,50 @@ StillTurning:
 	
 	
 NorthsideE2W:
-	;TO-DO
 	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
-	LOADI	&B00101101
-	OUT 	SONAREN
+	LOADI	&B00100001
+	OUT		SONAREN
+	LOAD	ClockTimer
+	OR		Zero
+	JZERO	TimerSetup
 	LOAD	FMid
 	STORE	DVel
-NPathE2WStillMoving:
-	IN		DIST2
+	OUT		TIMER
+NPathLoop1:
+	IN		TIMER
 	STORE	Temp
-	IN		DIST3
-	ADD		Temp
-	SHIFT	-1
-	SUB		WPathWWall
-	JNEG	NPathE2WExit
-	JUMP	NPathE2WStillMoving
-NPathE2WExit:
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	NPathLoop1
+TimerExit:
+	OUT		TIMER
+NPathLoop2:
+	IN		TIMER
+	STORE	Temp
+	LOAD	ClockTimer
+	SUB		Temp
+	JPOS	NPathLoop2
 	LOADI	0
-	STORE	DVel
-	LOADI	270
+	STORE	DVel ;stahp
+	LOADI	90
 	STORE	DTheta
-	CALL	StillTurning
+	CALL	StillTurning ;robot turns 90 degrees to the south, and moves to state[2]
 	CALL	StateAdvance
-	JUMP	StateSwitch
+	CALL	StateSwitch
+	;END of Northside East to West transit
+TimerSetup:
+	OUT		TIMER
+	LOAD	FMid
+	STORE	DVel
+TimerSetupLoop:
+	IN		DIST0
+	SUB		NPathBaffleWall
+	JPOS	TimerBreak
+	JUMP	TimerSetupLoop
+TimerBreak:
+	IN		TIMER
+	STORE	ClockTimer
+	JUMP	TimerExit
 	
 
 WestsideN2S:
