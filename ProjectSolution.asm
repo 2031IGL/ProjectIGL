@@ -427,7 +427,48 @@ TrigSection:
 	STORE	SEPointSECorner
 ShortCalc:
 	; storing deltas for rotational sonar reading ease of use
-	; hello
+	LOAD	NEPointBaffleInCorner
+	SUB		NPathBaffleWall
+	STORE	NEPTInCBWLDelta
+	LOAD	NEPointBaffleOutCorner
+	SUB		NPathBaffleWall
+	STORE	NEPTOutCBWLDelta
+	LOAD	NEPointBaffleOutCorner
+	SUB		NEPointBoundary
+	STORE	NEPTOutCBNDelta
+	LOAD	NEPointNECorner
+	SUB		NEPointBoundary
+	STORE	NEPTNECBNDelta
+	LOAD	NEPointNECorner
+	SUB		NPathNWall
+	STORE	NEPTNECNWLDelta
+	LOAD	NWPointNCorner
+	SUB		NPathNWall
+	STORE	NWPTNCNWLDelta
+	LOAD	NWPointWCorner
+	SUB		WPathWWall
+	STORE	NWPTWCWWLDelta
+	LOAD	SWPointWCorner
+	SUB		WPathWWall
+	STORE	SWPTWCWWLDelta
+	LOAD	SWPointSCorner
+	SUB		SPathCloseWall
+	STORE	SWPTSCCWLDelta
+	LOAD	SEPointSECorner
+	SUB		SPathFarWall
+	STORE	SEPTSECFWLDelta
+	LOAD	SEPointSECorner
+	SUB		SEPointBoundary
+	STORE	SEPTSECBNDelta
+	LOAD	SEPointBaffleInCorner
+	SUB		SPathBaffleWall
+	STORE	SEPTInCBWLDelta
+	LOAD	SEPointBaffleOutCorner
+	SUB		SPathBaffleWall
+	STORE	SEPTOutCBWLDelta
+	LOAD	SEPointBaffleOutCorner
+	SUB		SEPointBoundary
+	STORE	SEPTOutCBNDelta
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
@@ -1251,6 +1292,8 @@ NWPTNCNWLDelta:
 		DW 0
 NWPTNCNWLTheta:
 		DW 0
+NWPTNCWCDelta:
+		DW 0
 NWPTNCWCTheta:
 		DW 0
 NWPTWCWWLDelta:
@@ -1260,7 +1303,7 @@ NWPTWCWWLTheta:
 SWPTWCWWLDelta:
 		DW 0
 SWPTWCWWLTheta:
-		DW 0
+		DW 0	
 SWPTWCWSCTheta:
 		DW 0
 SWPTSCCWLDelta:
