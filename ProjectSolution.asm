@@ -1226,6 +1226,67 @@ SEPointBoundary:
 		DW &H4C3
 SEPointSECorner:
 		DW &HEF7
+NEPTInCBWLDelta:
+		DW 0
+NEPTInCBWLTheta:
+		DW 0
+NEPTOutCBWLDelta:
+		DW 0
+NEPTOutCBWLTheta:
+		DW 0
+NEPTOutCBNDelta:
+		DW 0
+NEPTOutCBNTheta:
+		DW 0
+NEPTNECBNDelta:
+		DW 0
+NEPTNECBNTheta:
+		DW 0
+NEPTNECNWLDelta:
+		DW 0
+NEPTNECNWLTheta:
+		DW 0
+NWPTNCNWLDelta:
+		DW 0
+NWPTNCNWLTheta:
+		DW 0
+NWPTNCWCTheta:
+		DW 0
+NWPTWCWWLDelta:
+		DW 0
+NWPTWCWWLTheta:
+		DW 0
+SWPTWCWWLDelta:
+		DW 0
+SWPTWCWWLTheta:
+		DW 0
+SWPTWCWSCTheta:
+		DW 0
+SWPTSCCWLDelta:
+		DW 0
+SWPTSCCWLTheta:
+		DW 0
+SEPTSECFWLDelta:
+		DW 0
+SEPTSECFWLTheta:
+		DW 0
+SEPTSECBNDelta:
+		DW 0
+SEPTSECBNTheta:
+		DW 0
+SEPTInCBWLDelta:
+		DW 0
+SEPTInCBWLTheta:
+		DW 0
+SEPTOutCBWLDelta:
+		DW 0
+SEPTOutCBWLTheta:
+		DW 0
+SEPTOutCBNDelta:
+		DW 0
+SEPTOutCBNTheta:
+		DW 0
+
 
 
 
