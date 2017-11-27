@@ -506,6 +506,127 @@ ShortCalc:
 	LOAD	SEPointBaffleOutCorner
 	SUB		SEPointBoundary
 	STORE	SEPTOutCBNDelta
+	; line break
+	LOAD 	NPathBaffleWall
+	STORE	AtanY
+	LOAD 	NEPTInCBWLDelta
+	STORE	AtanX
+	CALL 	Atan2
+	STORE	NEPTInCBWLTheta
+	; line break
+	LOAD  	NPathBaffleWall
+	STORE 	AtanY
+	LOAD  	NEPTOutCBWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	NEPTOutCBWLTheta
+	; line break
+	LOAD  	NEPointBoundary
+	STORE 	AtanY
+	LOAD  	NEPTOutCBNDelta
+	STORE	AtanX
+	CALL  	Atan2
+	STORE 	NEPTOutCBNTheta
+	; line break
+	LOAD  	NEPointBoundary
+	STORE 	AtanY
+	LOAD  	NEPTNECBNDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	NEPTNECBNTheta
+	; line break
+	LOAD  	NPathNWall
+	STORE 	AtanY
+	LOAD  	NEPTNECNWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	NEPTNECNWLTheta
+	; line break
+	LOAD  	NPathNWall
+	STORE 	AtanY
+	LOAD  	NWPTNCNWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	NWPTNCNWLTheta
+	;line break
+	LOADI	90
+	SUB		NWPTNCNWLTheta
+	STORE	Temp
+	LOAD	NWPTWCWWLTheta
+	SUB		Temp
+	STORE 	NWPTNCWCTheta
+	;line break
+	LOAD  	NWPTWCWWLDelta
+	STORE 	AtanY
+	LOAD  	WPathWWall
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	NWPTWCWWLTheta
+	;line break
+	;SWPTWCWSCTheta
+	LOADI	90
+	SUB		SWPTWCWWLTheta
+	STORE	Temp
+	LOAD	SWPTSCCWLDelta
+	SUB		Temp
+	STORE 	SWPTWCWSCTheta
+	;line break
+	;SWPTSCCWLTheta
+	LOAD  	SPathCloseWall
+	STORE 	AtanY
+	LOAD  	SWPTSCCWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SWPTSCCWLTheta
+	;line break
+	LOAD  	SWPTWCWWLDelta
+	STORE 	AtanY
+	LOAD  	WPathWWall
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTInCBWLTheta
+	;line break
+	LOAD  	SPathFarWall
+	STORE 	AtanY
+	LOAD  	SEPTSECFWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTSECFWLTheta
+	; line break
+	LOAD  	SEPTSECBNDelta
+	STORE 	AtanY
+	LOAD  	SEPointBoundary
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTInCBWLTheta
+	;line break
+	LOAD  	SEPTSECBNDelta
+	STORE 	AtanY
+	LOAD  	SEPointBoundary
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTInCBWLTheta
+	;line break
+	LOAD  	SPathBaffleWall
+	STORE 	AtanY
+	LOAD  	SEPTInCBWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTInCBWLTheta
+	;line break
+	LOAD  	SPathBaffleWall
+	STORE 	AtanY
+	LOAD  	SEPTOutCBWLDelta
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTOutCBWLTheta
+	;line break
+	LOAD  	SEPTOutCBNDelta
+	STORE 	AtanY
+	LOAD  	SEPointBoundary
+	STORE 	AtanX
+	CALL  	Atan2
+	STORE 	SEPTOutCBNTheta
 	;Put theta calculations here
 	JUMP	PostCalcWaitCycle
 	
@@ -1470,260 +1591,66 @@ SEPointSECorner:
 		DW &HEF7
 NEPTInCBWLDelta:
 		DW 0
-		LOAD  NEPointBaffleInCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NPathBaffleWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NEPTInCBWLDelta
 NEPTInCBWLTheta:
 		DW 0
-		LOAD  NPathBaffleWall
-		STORE AtanY
-		LOAD  NEPTInCBWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE NEPTInCBWLTheta
 NEPTOutCBWLDelta:
 		DW 0
-		LOAD  NEPointBaffleOutCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NPathBaffleWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NEPTOutCBWLDelta
 NEPTOutCBWLTheta:
 		DW 0
-		LOAD  NPathBaffleWall
-		STORE AtanY
-		LOAD  NEPTOutCBWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE NEPTOutCBWLTheta
 NEPTOutCBNDelta:
 		DW 0
-		LOAD  NEPointBaffleOutCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NEPointBoundary
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NEPTOutCBNDelta
 NEPTOutCBNTheta:
 		DW 0
-		LOAD  NEPointBoundary
-		STORE AtanY
-		LOAD  NEPTOutCBNDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE NEPTOutCBNTheta
 NEPTNECBNDelta:
 		DW 0
-		LOAD  NEPointNECorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NEPointBoundary
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NEPTNECBNDelta
 NEPTNECBNTheta:
 		DW 0
-		LOAD  NEPointBoundary
-		STORE AtanY
-		LOAD  NEPTNECBNDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE NEPTNECBNTheta
 NEPTNECNWLDelta:
 		DW 0
-		LOAD  NEPointNECorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NPathNWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NEPTNECNWLDelta
 NEPTNECNWLTheta:
 		DW 0
-		LOAD  NPathNWall
-		STORE AtanY
-		LOAD  NEPTNECNWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE NEPTNECNWLTheta
 NWPTNCNWLDelta:
 		DW 0
-		LOAD  NWPointNCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NPathNWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NWPTNCNWLDelta
 NWPTNCNWLTheta:
 		DW 0
 NWPTNCWCDelta:
 		DW 0
-		LOAD  NWPointNCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NWPointWCorner
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NWPTNCWCDelta
-NWPTNCWCTheta:
+NWPTNCWCTheta: 
 		DW 0
 NWPTWCWWLDelta:
 		DW 0
-		LOAD  NEPointBaffleInCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  NPathBaffleWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE NWPTWCWWLDelta
-NWPTWCWWLTheta:
-		DW 0
+NWPTWCWWLTheta: 
+		DW 0	
 SWPTWCWWLDelta:
 		DW 0
-		LOAD  SWPointWCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  WPathWWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SWPTWCWWLDelta
 SWPTWCWWLTheta:
-		DW 0
-		LOAD  SWPTWCWWLDelta
-		STORE AtanY
-		LOAD  WPathWWall
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTInCBWLTheta	
+		DW 0	
 SWPTWCWSCTheta:
 		DW 0
 SWPTSCCWLDelta:
 		DW 0
-		LOAD  SWPointSCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  SPathCloseWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SWPTSCCWLDelta
 SWPTSCCWLTheta:
 		DW 0
-		LOAD  SPathCloseWall
-		STORE AtanY
-		LOAD  SWPTSCCWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTInCBWLTheta
 SEPTSECFWLDelta:
 		DW 0
-		LOAD  SEPointSECorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  SPathFarWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SEPTSECFWLDelta
 SEPTSECFWLTheta:
 		DW 0
-		LOAD  SPathFarWall
-		STORE AtanY
-		LOAD  SEPTSECFWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTSECFWLTheta
 SEPTSECBNDelta:
 		DW 0
-		LOAD  SEPointSECorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  SEPointBoundary
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SEPTSECBNDelta
 SEPTSECBNTheta:
 		DW 0
-		LOAD  SEPTSECBNDelta
-		STORE AtanY
-		LOAD  SEPointBoundary
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTInCBWLTheta
 SEPTInCBWLDelta:
 		DW 0
-		LOAD  SEPointBaffleInCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  SPathBaffleWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SEPTInCBWLDelta
 SEPTInCBWLTheta:
 		DW 0
-		LOAD  SPathBaffleWall
-		STORE AtanY
-		LOAD  SEPTInCBWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTInCBWLTheta
 SEPTOutCBWLDelta:
 		DW 0
-		LOAD  SEPointBaffleOutCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  SPathBaffleWall
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SEPTOutCBWLDelta
 SEPTOutCBWLTheta:
 		DW 0
-		LOAD  SPathBaffleWall
-		STORE AtanY
-		LOAD  SEPTOutCBWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTOutCBWLTheta
 SEPTOutCBNDelta:
 		DW 0
-		LOAD  SEPointBaffleOutCorner
-		CALL  SecondPower
-		STORE Temp
-		LOAD  SEPointBoundary
-		CALL  SecondPower
-		SUB	  Temp
-		CALL  RootTwo
-		STORE SEPTOutCBNDelta
 SEPTOutCBNTheta:
 		DW 0
-		LOAD  SEPTOutCBNDelta
-		STORE AtanY
-		LOAD  SEPointBoundary
-		STORE AtanX
-		CALL  Atan2
-		STORE SEPTOutCBNTheta
-
-
 
 
 BaffWallLowBound:	
