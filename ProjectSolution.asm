@@ -254,12 +254,49 @@ CMADone:
 	OUT    LVELCMD
 	LOAD   CMAR
 	OUT    RVELCMD
-
+	
+	CALL	CourseCorrection
+	CALL	IntruderScan
+	
 	RETURN
 	CMAErr: DW 0       ; holds angle error velocity
 	CMAL:    DW 0      ; holds temp left velocity
 	CMAR:    DW 0      ; holds temp right velocity
+	
+CourseCorrection:
+	;TO-DO
+	;Reads in values from baffle-side sonar and adjusts desired Theta to gently turn toward or away from the baffle
+	RETURN
 
+IntruderScan:
+	;TO-DO
+	;Handles expected measured distance based on state and "intrudercounter"
+	;enables and reads sonar sensors 2 and 3 every 8th cycle 
+	LOAD	FrontScanCycle
+	AND		7
+	JZERO	NoScan
+	LOAD	State
+	LOADI	&B00
+NoScan:
+	CALL	IncrementFrontCycle
+	RETURN
+IntruderCounter:	
+	DW 0
+FrontScanCycle:		
+	DW 0
+
+IncrementFrontCycle:
+	LOAD	FrontScanCycle
+	ADDI	-8
+	JZERO	NoWrapFC
+	JUMP	WrapUpFC
+NoWrapFC:
+	LOAD 	FrontScanCycle
+	ADDI	1
+WrapUpFC:
+	STORE	FrontScanCycle
+	RETURN
+	
 ; Returns the current angular error wrapped to +/-180
 GetThetaErr:
 	; convenient way to get angle error in +/-180 range is
@@ -469,6 +506,7 @@ ShortCalc:
 	LOAD	SEPointBaffleOutCorner
 	SUB		SEPointBoundary
 	STORE	SEPTOutCBNDelta
+	;Put theta calculations here
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
