@@ -67,6 +67,9 @@ WaitForUser:
 ;* Main code
 ;***************************************************************
 Main:
+	SEI		&B0010
+	LOADI	10
+	OUT		CTIMER
 	CALL Precalc
 	CALL Die
 
@@ -255,8 +258,8 @@ CMADone:
 	LOAD   CMAR
 	OUT    RVELCMD
 	
-	CALL	CourseCorrection
-	CALL	IntruderScan
+	;CALL	CourseCorrection
+	;CALL	IntruderScan
 	
 	RETURN
 	CMAErr: DW 0       ; holds angle error velocity
@@ -266,7 +269,137 @@ CMADone:
 CourseCorrection:
 	;TO-DO
 	;Reads in values from baffle-side sonar and adjusts desired Theta to gently turn toward or away from the baffle
+	LOAD	State
+	SUB		CCStateSwitch
+	JNEG	CCUseSonarZero
+	JUMP	CCUseSonarFive
+CCUseSonarZero:
+	LOADI	3
+	STORE	CCConstant
+	LOAD	State
+	JZERO	CCEnd	;state=0
+	ADDI	-1
+	JZERO	ZeroBaffleWall ; state=1
+	ADDI	-1
+	JZERO	ZeroBaffleHead ;state=2
+	JUMP	ZeroBaffleWall ;state=3
+ZeroBaffleWall:
+	IN		DIST0
+	STORE	CCCurrentSonar
+	LOAD	NPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+ZeroBaffleHead:
+	IN		DIST0
+	STORE	CCCurrentSonar
+	LOAD	WPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+CCUseSonarFive:
+	LOADI	-3
+	STORE	CCConstant
+	LOAD	State
+	ADDI	-4
+	JZERO	CCEnd ;state=4
+	ADDI	-1
+	JZERO	FiveBaffleWall ;state=5
+	ADDI	-1
+	JZERO	FiveBaffleHead ;state=6
+	JUMP	FiveBaffleWall ;state=7
+FiveBaffleWall:
+	IN		DIST5
+	STORE	CCCurrentSonar
+	LOAD	NPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+FiveBaffleHead:
+	IN		DIST5
+	STORE	CCCurrentSonar
+	LOAD	WPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+CCDetermineHeading:
+	LOAD	CCPreviousSonar
+	SUB		CCCurrentSonar
+	STORE	CCCourseSwitch
+CCDetermineDistance:
+	LOAD	CCDesiredDistance
+	SUB		CCCurrentSonar
+	STORE	CCDistanceSwitch
+	JNEG	TooFar
+	JZERO	GoodDistance
+	JPOS	TooClose
+CCEnd:
+	LOAD	CCCurrentSonar
+	STORE	CCPreviousSonar
 	RETURN
+	
+CCTurnDirection:	DW 0
+CCConstant:			DW 3
+CCStateSwitch:		DW 4
+CCPreviousSonar:	DW &H392
+CCCurrentSonar:		DW 0
+CCDesiredDistance:	DW 0
+CCDistanceSwitch:	DW 0
+CCCourseSwitch:		DW 0
+
+TooFar:
+	LOAD	CCCourseSwitch
+	JNEG	TurnIn
+	JPOS	StayStraight
+	JZERO	TurnIn
+GoodDistance:
+	LOAD	CCCourseSwitch
+	JNEG	EvenOut
+	JPOS	EvenOut
+	JZERO	StayStraight
+TooClose:
+	LOAD	CCCourseSwitch
+	JNEG	StayStraight
+	JPOS	TurnOut
+	JZERO	TurnOut
+TurnIn:
+	LOAD	DTheta
+	ADD		CCConstant
+	STORE	DTheta
+	LOAD	CCTurnDirection
+	ADDI	1
+	STORE	CCTurnDirection
+	JUMP	CCEnd
+StayStraight:
+	JUMP	CCEnd
+TurnOut:
+	LOAD	DTheta
+	SUB		CCConstant
+	STORE	DTheta
+	LOAD	CCTurnDirection
+	ADDI	-1
+	STORE	CCTurnDirection
+	JUMP	CCEnd
+EvenOut:
+	LOAD	CCTurnDirection
+	JZERO	CCEnd
+	JPOS	EvenPos
+	JNEG	EvenNeg
+EvenPos:
+	LOAD	CCTurnDirection
+	JZERO	CCEND
+	SUB		One
+	STORE	CCTurnDirection
+	LOAD	DTheta
+	SUB		CCConstant
+	STORE	DTheta
+	JUMP	EvenPos
+EvenNeg:
+	LOAD	CCTurnDirection
+	JZERO	CCEND
+	ADD		One
+	STORE	CCTurnDirection
+	LOAD	DTheta
+	ADD		CCConstant
+	STORE	DTheta
+	JUMP	EvenNeg
+	
 
 IntruderScan:
 	;TO-DO
@@ -282,15 +415,27 @@ IntruderScan:
 	JZERO	NoScan
 	LOADI	&B00101101
 	OUT		SONAREN
-	OUT		DIST2
+	IN		DIST2
 	STORE	Temp
-	OUT		DIST3
+	IN		DIST3
 	ADD		Temp
 	SHIFT	-1
 	SUB		NoseDistance
 	JPOS	NoIntruderInFrontOfOurNose
 	CALL	IntruderAlert
+	LOADI	0
+	STORE	DVel
+IntruderPause:
+	IN		DIST2
+	STORE	Temp
+	IN		DIST3
+	ADD		Temp
+	SHIFT	-1
+	SUB		NoseDistance
+	JPOS	NoIntruderInFrontOfOurNose
+	JUMP	IntruderPause
 NoIntruderInFrontOfOurNose:
+	
 	LOADI	&B00100001
 	OUT		SONAREN
 	RETURN
@@ -388,19 +533,24 @@ BaffleTrigger:
 ;advances state variable. Wraps around back to zero if greater than max size
 StateAdvance:
 	LOAD	State
+	OUT		LCD
 	SUB 	StateMax
-	JZERO	NoWrap
-	JUMP	WrapUp
+	JZERO	WrapUp
+	JUMP	NoWrap
+WrapUp:
+	LOADI	0
+	JUMP	EndWrap
 NoWrap:
 	LOAD 	State
 	ADDI	1
-WrapUp:
+EndWrap:
 	STORE	State
 	RETURN
 
 PreCalc:
 	;TO-DO
 	;calculates minor changes to the arena based on the baffle's vertical position
+	OUT    RESETPOS    ; reset odometer in case wheels moved after programming
 	LOAD	Mask0
 	OUT 	SONAREN
 	IN 		DIST0
@@ -769,13 +919,18 @@ WestSideN2SPhase2: ;traverse 48 inches due south
 	LOAD	WestSideN2SCounter
 	OR		Zero
 	JZERO	WestSideN2SPhase2Exit
-	SUB		One
-	STORE	WestSideN2SCounter
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
 	JPOS	WestSideN2SPhase2
+	JZERO	WestSideN2STimerDecrement
+	JNEG	WestSideN2STimerDecrement
+WestSideN2STimerDecrement:
+	LOAD	WestSideN2SCounter
+	SUB		One
+	STORE	WestSideN2SCounter
+	JUMP	WestSideN2SPhase2
 WestSideN2SPhase2Exit:
 	OUT		TIMER
 WestSideN2SPhase3:
@@ -888,13 +1043,18 @@ WestSideS2NPhase2: ;traverse 48 inches due south
 	LOAD	WestSideS2NCounter
 	OR		Zero
 	JZERO	WestSideS2NPhase2Exit
-	SUB		One
-	STORE	WestSideS2NCounter
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
 	JPOS	WestSideS2NPhase2
+	JZERO	WestSideS2NTimerDecrement
+	JNEG	WestSideS2NTimerDecrement
+WestSideS2NTimerDecrement:
+	LOAD	WestSideS2NCounter
+	SUB		One
+	STORE	WestSideS2NCounter
+	JUMP	WestSideS2NPhase2
 WestSideS2NPhase2Exit:
 	OUT		TIMER
 WestSideS2NPhase3:
@@ -1058,6 +1218,9 @@ SecondPower:
 RootTwo:
 	;Setup
 	STORE	InitNum
+	LOADI	0
+	STORE	Root2Counter
+	LOAD	InitNum
 	SHIFT	-2
 	STORE	RootX0 ;use 1/4 IN number as arbitrary positive starting point
 RootRecurse:
@@ -1070,11 +1233,14 @@ RootRecurse:
 	ADD		RootX0 ; + X0
 	SHIFT	-1 ; divide by 2
 	STORE	RootX1
-	AND		RootX0 ; check against previous iteration
-	SUB		RootX0
-	JZERO	RootFinish ; if they're the same, we're done. Otherwise, keep chugging
 	LOAD	RootX1
 	STORE	RootX0
+	LOADI	10
+	SUB		Root2Counter
+	JZERO	RootFinish
+	LOAD	Root2Counter
+	ADDI	1
+	STORE	Root2Counter
 	JUMP	RootRecurse
 RootFinish:
 	LOAD	RootX1
@@ -1082,6 +1248,7 @@ RootFinish:
 InitNum:	DW 0
 RootX1:		DW 0
 RootX0: 	DW 0
+Root2Counter:	DW 0
 ;*******************************************************************************
 ; Mod360: modulo 360
 ; Returns AC%360 in AC
