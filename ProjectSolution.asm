@@ -271,6 +271,7 @@ CourseCorrection:
 IntruderScan:
 	;TO-DO
 	;Handles expected measured distance based on state and "intrudercounter"
+	LOAD	State
 	
 	;enables and reads sonar sensors 2 and 3 every 8th cycle 
 	LOAD	FrontScanCycle
@@ -673,7 +674,7 @@ InitialMovement:
 	JZERO	StateSwitch
 	JPOS	StateSwitch	
 
-	NorthsideSweep:
+NorthsideSweep:
 	;TO-DO
 	;execute the 180 degree scan above the baffle	
 	; turn left 180 degrees
