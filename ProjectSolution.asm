@@ -6,7 +6,7 @@
 ORG 0                  ; Jump table is located in mem 0-4
 ; This code uses the timer interrupt for the control code.
 	JUMP   Init        ; Reset vector
-	RETI               ; Sonar interrupt 
+	JUMP   IntruderAlert            ; Sonar interrupt 
 	JUMP   CTimer_ISR  ; Timer interrupt
 	RETI               ; UART interrupt (unused)
 	RETI               ; Motor stall interrupt (unused)
@@ -190,7 +190,14 @@ Forever:
 ; Timer ISR.  Currently just calls the movement control code.
 ; You could, however, do additional tasks here if desired.
 CTimer_ISR:
+	IN		TIMER
+	STORE	InteruptTimer
 	CALL   ControlMovement
+	IN		TIMER
+	SUB		InteruptTimer
+	STORE	InteruptTimer
+	ADD		InteruptTotal
+	STORE	InteruptTotal
 	RETI   ; return from ISR
 
 
@@ -265,14 +272,188 @@ CMADone:
 	
 CourseCorrection:
 	;TO-DO
+	;Reads in values from baffle-side sonar and adjusts desired Theta to gently turn toward or away from the baffleCourseCorrection:
+	;TO-DO
 	;Reads in values from baffle-side sonar and adjusts desired Theta to gently turn toward or away from the baffle
+	LOAD	State
+	SUB		CCStateSwitch
+	JNEG	CCUseSonarZero
+	JUMP	CCUseSonarFive
+CCUseSonarZero:
+	LOADI	3
+	STORE	CCConstant
+	LOAD	State
+	JZERO	CCEnd	;state=0
+	ADDI	-1
+	JZERO	ZeroBaffleWall ; state=1
+	ADDI	-1
+	JZERO	ZeroBaffleHead ;state=2
+	JUMP	ZeroBaffleWall ;state=3
+ZeroBaffleWall:
+	IN		DIST0
+	STORE	CCCurrentSonar
+	LOAD	NPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+ZeroBaffleHead:
+	IN		DIST0
+	STORE	CCCurrentSonar
+	LOAD	WPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+CCUseSonarFive:
+	LOADI	-3
+	STORE	CCConstant
+	LOAD	State
+	ADDI	-4
+	JZERO	CCEnd ;state=4
+	ADDI	-1
+	JZERO	FiveBaffleWall ;state=5
+	ADDI	-1
+	JZERO	FiveBaffleHead ;state=6
+	JUMP	FiveBaffleWall ;state=7
+FiveBaffleWall:
+	IN		DIST5
+	STORE	CCCurrentSonar
+	LOAD	NPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+FiveBaffleHead:
+	IN		DIST5
+	STORE	CCCurrentSonar
+	LOAD	WPathBaffleWall
+	STORE	CCDesiredDistance
+	JUMP	CCDetermineDistance
+CCDetermineHeading:
+	LOAD	CCPreviousSonar
+	SUB		CCCurrentSonar
+	STORE	CCCourseSwitch
+CCDetermineDistance:
+	LOAD	CCDesiredDistance
+	SUB		CCCurrentSonar
+	STORE	CCDistanceSwitch
+	JNEG	TooFar
+	JZERO	GoodDistance
+	JPOS	TooClose
+CCEnd:
+	LOAD	CCCurrentSonar
+	STORE	CCPreviousSonar
 	RETURN
+	
+CCTurnDirection:	DW 0
+CCConstant:			DW 3
+CCStateSwitch:		DW 4
+CCPreviousSonar:	DW &H392
+CCCurrentSonar:		DW 0
+CCDesiredDistance:	DW 0
+CCDistanceSwitch:	DW 0
+CCCourseSwitch:		DW 0
+
+TooFar:
+	LOAD	CCCourseSwitch
+	JNEG	TurnIn
+	JPOS	StayStraight
+	JZERO	TurnIn
+GoodDistance:
+	LOAD	CCCourseSwitch
+	JNEG	EvenOut
+	JPOS	EvenOut
+	JZERO	StayStraight
+TooClose:
+	LOAD	CCCourseSwitch
+	JNEG	StayStraight
+	JPOS	TurnOut
+	JZERO	TurnOut
+TurnIn:
+	LOAD	DTheta
+	ADD		CCConstant
+	STORE	DTheta
+	LOAD	CCTurnDirection
+	ADDI	1
+	STORE	CCTurnDirection
+	JUMP	CCEnd
+StayStraight:
+	JUMP	CCEnd
+TurnOut:
+	LOAD	DTheta
+	SUB		CCConstant
+	STORE	DTheta
+	LOAD	CCTurnDirection
+	ADDI	-1
+	STORE	CCTurnDirection
+	JUMP	CCEnd
+EvenOut:
+	LOAD	CCTurnDirection
+	JZERO	CCEnd
+	JPOS	EvenPos
+	JNEG	EvenNeg
+EvenPos:
+	LOAD	CCTurnDirection
+	JZERO	CCEND
+	SUB		One
+	STORE	CCTurnDirection
+	LOAD	DTheta
+	SUB		CCConstant
+	STORE	DTheta
+	JUMP	EvenPos
+EvenNeg:
+	LOAD	CCTurnDirection
+	JZERO	CCEND
+	ADD		One
+	STORE	CCTurnDirection
+	LOAD	DTheta
+	ADD		CCConstant
+	STORE	DTheta
+	JUMP	EvenNeg
 	
 IntruderScan:
 	;TO-DO
 	;Handles expected measured distance based on state and "intrudercounter"
-	LOAD	State
-	
+IntruderSwitch:
+	LOAD 	State
+	JZERO 	Scanning0
+	SUB 	One
+	JZERO 	Scanning1
+	LOAD 	State
+	SUB 	Two
+	JZERO 	Scanning2
+	LOAD 	State
+	SUB 	Three
+	JZERO 	Scanning3
+	LOAD 	State
+	SUB 	Four
+	JZERO 	Scanning4
+	LOAD 	State
+	SUB 	Five
+	JZERO 	Scanning5
+	LOAD 	State
+	SUB 	Six
+	JZERO 	Scanning6
+	LOAD 	State
+	SUB 	Seven
+	JZERO 	Scanning7
+Scanning0:
+	SEI		&B0101
+Scanning1:
+	CLI		&B0001
+	IN		DIST5
+	STORE	Temp
+	LOAD	NPathNWall
+	SUB		200 ;BOOKMARK
+Scanning2:
+	CLI		&B0001
+Scanning3:
+	CLI		&B0001
+Scanning4:
+	SEI		&B0101
+Scanning5:
+	CLI		&B0001
+Scanning6:
+	CLI		&B0001
+Scanning7:
+	CLI		&B0001
+	;if we get here, something has broken, so kill everything
+	JUMP 	Die
 	;enables and reads sonar sensors 2 and 3 every 8th cycle 
 	LOAD	FrontScanCycle
 	SUB		7
@@ -672,8 +853,9 @@ InitialMovement:
 	SUB		Temp
 	JNEG	InitialMovement
 	JZERO	StateSwitch
-	JPOS	StateSwitch	
+	JPOS	StateSwitch
 
+	
 NorthsideSweep:
 	;TO-DO
 	;execute the 180 degree scan above the baffle	
@@ -681,6 +863,7 @@ NorthsideSweep:
 	LOADI	&B00100001
 	STORE	SONAREN
 	LOADI	0
+	STORE	CourseCorrectToggle
 	STORE 	DVel
 	LOADI 	360
 	STORE 	DTheta
@@ -688,7 +871,6 @@ NorthsideSweep:
 	CALL	StateAdvance
 	JUMP	StateSwitch
 ;turns to DTheta at DVel based on internal odometry
-
 StillTurning:
 	CALL   GetThetaErr 		; get the heading error
 	CALL   Abs         		; absolute value subroutine
@@ -703,6 +885,8 @@ NorthsideE2W:
 	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
 	LOADI	&B00100001
 	OUT		SONAREN
+	LOADI	1
+	STORE	CourseCorrectToggle
 	LOAD	ClockTimer
 	OR		Zero
 	JZERO	TimerSetup
@@ -714,6 +898,7 @@ NPathLoop1:
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	NPathLoop1
 TimerExit:
 	OUT		TIMER
@@ -722,6 +907,7 @@ NPathLoop2:
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	NPathLoop2
 	LOADI	0
 	STORE	DVel ;stahp
@@ -750,6 +936,8 @@ WestsideN2S:
 	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
 	LOADI	&B00100001
 	OUT		SONAREN
+	LOADI	1
+	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 WestSideN2SPhase1:
@@ -767,24 +955,35 @@ WestSideN2SPhase1:
 	CALL	IntruderAlert
 WestSideN2SIntruderSkip:
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 WestSideN2SPhase2: ;traverse 48 inches due south
 	LOAD	WestSideN2SCounter
 	OR		Zero
 	JZERO	WestSideN2SPhase2Exit
-	SUB		One
-	STORE	WestSideN2SCounter
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	WestSideN2SPhase2
+	JZERO	WestSideN2STimerDecrement
+	JNEG	WestSideN2STimerDecrement
+WestSideN2STimerDecrement:
+	LOAD	WestSideN2SCounter
+	SUB		One
+	STORE	WestSideN2SCounter
+	JUMP	WestSideN2SPhase2
 WestSideN2SPhase2Exit:
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 WestSideN2SPhase3:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	WestSideN2SPhase3
 	LOADI	0
 	STORE	DVel
@@ -800,20 +999,29 @@ SouthsideW2E:
 	;Move east, follow baffle,  stop after moving ~12 inches past the edge
 	LOADI	&B00100001
 	OUT		SONAREN
+	LOADI	1
+	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 SouthsideE2WLoop:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	SouthsideE2WLoop
+	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 SouthsideE2WLoop2:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	SouthsideE2WLoop2
 	LOADI	0
 	STORE	DVel
@@ -827,6 +1035,8 @@ SouthsideSweep:
 	;Execute 180 degree scan below the baffle
 	LOADI	&B00000001
 	OUT		SONAREN
+	LOADI	0
+	STORE	CourseCorrectToggle
 	LOADI  360
 	STORE  	DTheta
 	CALL	StillTurning
@@ -839,21 +1049,29 @@ SouthsideE2W:
 	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
 	LOADI	&B00100001
 	OUT		SONAREN
+	LOADI	1
+	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 SPathLoop1:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	SPathLoop1
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 SPathLoop2:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	SPathLoop2
 	LOADI	0
 	STORE	DVel ;stahp
@@ -869,10 +1087,12 @@ WestsideS2N:
 	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
 	LOADI	&B00100001
 	OUT		SONAREN
+	LOADI	1
+	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 WestSideS2NPhase1:
-	IN		DIST0 ;load sonar reading again, check if baffle. If not baffle, then intruder
+	IN		DIST5 ;load sonar reading again, check if baffle. If not baffle, then intruder
 	STORE	Temp
 	LOAD	WPathBaffleWall
 	ADDI	100
@@ -880,30 +1100,41 @@ WestSideS2NPhase1:
 	JPOS	WestSideS2NIntruderSkip
 	LOADI	&H724
 	STORE	Temp
-	IN		DIST0
+	IN		DIST5
 	SUB		Temp
 	JPOS	WestSideS2NPhase1
 	CALL	IntruderAlert
 WestSideS2NIntruderSkip:
 	OUT		TIMER
-WestSideS2NPhase2: ;traverse 48 inches due south
+	LOADI	0
+	STORE	InteruptTotal
+WestSideS2NPhase2: ;traverse 48 inches due north
 	LOAD	WestSideS2NCounter
 	OR		Zero
 	JZERO	WestSideS2NPhase2Exit
-	SUB		One
-	STORE	WestSideS2NCounter
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	WestSideS2NPhase2
+	JZERO	WestSideS2NTimerDecrement
+	JNEG	WestSideS2NTimerDecrement
+WestSideS2NTimerDecrement:
+	LOAD	WestSideS2NCounter
+	SUB		One
+	STORE	WestSideS2NCounter
+	JUMP	WestSideS2NPhase2
 WestSideS2NPhase2Exit:
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 WestSideS2NPhase3:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	WestSideS2NPhase3
 	LOADI	0
 	STORE	DVel
@@ -920,20 +1151,29 @@ NorthsideW2E:
 	;Move south, follow baffle, stop after moving ~12 inches past the edge
 	LOADI	&B00100001
 	OUT		SONAREN
+	LOADI	1
+	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 NorthsideW2ELoop:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	NorthsideW2ELoop
+	OUT		TIMER
+	LOADI	0
+	STORE	InteruptTotal
 NorthsideW2ELoop2:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
+	ADD		InteruptTotal
 	JPOS	NorthsideW2ELoop2
 	LOADI	0
 	STORE	DVel
@@ -1554,6 +1794,11 @@ Seven:    DW 7
 Eight:    DW 8
 Nine:     DW 9
 Ten:      DW 10
+
+
+CourseCorrectToggle:	DW 0 ;write 0 to disable course correction, 1 to enable. Defaults disabled
+InteruptTimer:			DW 0 ;timer to account for interrupt time
+InteruptTotal:			DW 0
 
 StateMax:
 		DW 7
