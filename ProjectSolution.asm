@@ -491,7 +491,17 @@ CapVelLow:
 	CALL    Neg
 	RETURN
 	MaxVal: DW 510
-
+InitialMovement:
+	IN		Dist3
+	STORE	Temp
+	IN		DIST2
+	ADD		Temp
+	SHIFT	-1
+	LOAD	StartingWWall
+	SUB		Temp
+	JNEG	InitialMovement
+	JZERO	StateSwitch
+	JPOS	StateSwitch
 ;***************************************************************
 ;* Subroutines
 ;***************************************************************
