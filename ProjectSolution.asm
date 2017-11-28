@@ -541,16 +541,16 @@ ShortCalc:
 	CALL  	Atan2
 	STORE 	NEPTOutCBWLTheta
 	; line break
-	LOAD  	NEPointBoundary
-	STORE 	AtanY
 	LOAD  	NEPTOutCBNDelta
+	STORE 	AtanY
+	LOAD  	NEPointBoundary
 	STORE	AtanX
 	CALL  	Atan2
 	STORE 	NEPTOutCBNTheta
 	; line break
-	LOAD  	NEPointBoundary
-	STORE 	AtanY
 	LOAD  	NEPTNECBNDelta
+	STORE 	AtanY
+	LOAD  	NEPointBoundary
 	STORE 	AtanX
 	CALL  	Atan2
 	STORE 	NEPTNECBNTheta
@@ -572,8 +572,8 @@ ShortCalc:
 	LOADI	90
 	SUB		NWPTNCNWLTheta
 	STORE	Temp
-	LOAD	NWPTWCWWLTheta
-	SUB		Temp
+	LOAD	Temp
+	SUB		NWPTWCWWLTheta
 	STORE 	NWPTNCWCTheta
 	;line break
 	LOAD  	NWPTWCWWLDelta
@@ -587,8 +587,8 @@ ShortCalc:
 	LOADI	90
 	SUB		SWPTWCWWLTheta
 	STORE	Temp
-	LOAD	SWPTSCCWLDelta
-	SUB		Temp
+	LOAD	Temp
+	SUB		SWPTSCCWLDelta
 	STORE 	SWPTWCWSCTheta
 	;line break
 	;SWPTSCCWLTheta
@@ -604,7 +604,7 @@ ShortCalc:
 	LOAD  	WPathWWall
 	STORE 	AtanX
 	CALL  	Atan2
-	STORE 	SEPTInCBWLTheta
+	STORE 	SWPTWCWWLTheta
 	;line break
 	LOAD  	SPathFarWall
 	STORE 	AtanY
@@ -618,14 +618,7 @@ ShortCalc:
 	LOAD  	SEPointBoundary
 	STORE 	AtanX
 	CALL  	Atan2
-	STORE 	SEPTInCBWLTheta
-	;line break
-	LOAD  	SEPTSECBNDelta
-	STORE 	AtanY
-	LOAD  	SEPointBoundary
-	STORE 	AtanX
-	CALL  	Atan2
-	STORE 	SEPTInCBWLTheta
+	STORE 	SEPTSECBNTheta
 	;line break
 	LOAD  	SPathBaffleWall
 	STORE 	AtanY
@@ -647,13 +640,6 @@ ShortCalc:
 	STORE 	AtanX
 	CALL  	Atan2
 	STORE 	SEPTOutCBNTheta
-	;Put theta calculations here
-		LOAD  NPathBaffleWall
-		STORE AtanY
-		LOAD  NEPTInCBWLDelta
-		STORE AtanX
-		CALL  Atan2
-		STORE NEPTInCBWLTheta
 	JUMP	PostCalcWaitCycle
 	
 PostCalcWaitCycle:
@@ -826,7 +812,7 @@ SouthsideSweep:
 	LOADI	&B00000001
 	OUT		SONAREN
 	LOADI  360
-	STORE  DTheta
+	STORE  	DTheta
 	CALL	StillTurning
 	CALL	StateAdvance
 	JUMP	StateSwitch
