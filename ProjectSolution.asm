@@ -67,9 +67,6 @@ WaitForUser:
 ;* Main code
 ;***************************************************************
 Main:
-	SEI		&B0010
-	LOADI	10
-	OUT		CTIMER
 	CALL Precalc
 	CALL Die
 
@@ -193,14 +190,7 @@ Forever:
 ; Timer ISR.  Currently just calls the movement control code.
 ; You could, however, do additional tasks here if desired.
 CTimer_ISR:
-	IN		TIMER
-	STORE	InteruptTimer
 	CALL   ControlMovement
-	IN		TIMER
-	SUB		InteruptTimer
-	STORE	InteruptTimer
-	ADD		InteruptTotal
-	STORE	InteruptTotal
 	RETI   ; return from ISR
 
 
@@ -265,11 +255,8 @@ CMADone:
 	LOAD   CMAR
 	OUT    RVELCMD
 	
-	LOAD	CourseCorrectToggle
-	JZERO	CCDisable
 	CALL	CourseCorrection
-CCDisable:
-	;CALL	IntruderScan
+	CALL	IntruderScan
 	
 	RETURN
 	CMAErr: DW 0       ; holds angle error velocity
@@ -279,138 +266,8 @@ CCDisable:
 CourseCorrection:
 	;TO-DO
 	;Reads in values from baffle-side sonar and adjusts desired Theta to gently turn toward or away from the baffle
-	LOAD	State
-	SUB		CCStateSwitch
-	JNEG	CCUseSonarZero
-	JUMP	CCUseSonarFive
-CCUseSonarZero:
-	LOADI	3
-	STORE	CCConstant
-	LOAD	State
-	JZERO	CCEnd	;state=0
-	ADDI	-1
-	JZERO	ZeroBaffleWall ; state=1
-	ADDI	-1
-	JZERO	ZeroBaffleHead ;state=2
-	JUMP	ZeroBaffleWall ;state=3
-ZeroBaffleWall:
-	IN		DIST0
-	STORE	CCCurrentSonar
-	LOAD	NPathBaffleWall
-	STORE	CCDesiredDistance
-	JUMP	CCDetermineDistance
-ZeroBaffleHead:
-	IN		DIST0
-	STORE	CCCurrentSonar
-	LOAD	WPathBaffleWall
-	STORE	CCDesiredDistance
-	JUMP	CCDetermineDistance
-CCUseSonarFive:
-	LOADI	-3
-	STORE	CCConstant
-	LOAD	State
-	ADDI	-4
-	JZERO	CCEnd ;state=4
-	ADDI	-1
-	JZERO	FiveBaffleWall ;state=5
-	ADDI	-1
-	JZERO	FiveBaffleHead ;state=6
-	JUMP	FiveBaffleWall ;state=7
-FiveBaffleWall:
-	IN		DIST5
-	STORE	CCCurrentSonar
-	LOAD	NPathBaffleWall
-	STORE	CCDesiredDistance
-	JUMP	CCDetermineDistance
-FiveBaffleHead:
-	IN		DIST5
-	STORE	CCCurrentSonar
-	LOAD	WPathBaffleWall
-	STORE	CCDesiredDistance
-	JUMP	CCDetermineDistance
-CCDetermineHeading:
-	LOAD	CCPreviousSonar
-	SUB		CCCurrentSonar
-	STORE	CCCourseSwitch
-CCDetermineDistance:
-	LOAD	CCDesiredDistance
-	SUB		CCCurrentSonar
-	STORE	CCDistanceSwitch
-	JNEG	TooFar
-	JZERO	GoodDistance
-	JPOS	TooClose
-CCEnd:
-	LOAD	CCCurrentSonar
-	STORE	CCPreviousSonar
 	RETURN
 	
-CCTurnDirection:	DW 0
-CCConstant:			DW 3
-CCStateSwitch:		DW 4
-CCPreviousSonar:	DW &H392
-CCCurrentSonar:		DW 0
-CCDesiredDistance:	DW 0
-CCDistanceSwitch:	DW 0
-CCCourseSwitch:		DW 0
-
-TooFar:
-	LOAD	CCCourseSwitch
-	JNEG	TurnIn
-	JPOS	StayStraight
-	JZERO	TurnIn
-GoodDistance:
-	LOAD	CCCourseSwitch
-	JNEG	EvenOut
-	JPOS	EvenOut
-	JZERO	StayStraight
-TooClose:
-	LOAD	CCCourseSwitch
-	JNEG	StayStraight
-	JPOS	TurnOut
-	JZERO	TurnOut
-TurnIn:
-	LOAD	DTheta
-	ADD		CCConstant
-	STORE	DTheta
-	LOAD	CCTurnDirection
-	ADDI	1
-	STORE	CCTurnDirection
-	JUMP	CCEnd
-StayStraight:
-	JUMP	CCEnd
-TurnOut:
-	LOAD	DTheta
-	SUB		CCConstant
-	STORE	DTheta
-	LOAD	CCTurnDirection
-	ADDI	-1
-	STORE	CCTurnDirection
-	JUMP	CCEnd
-EvenOut:
-	LOAD	CCTurnDirection
-	JZERO	CCEnd
-	JPOS	EvenPos
-	JNEG	EvenNeg
-EvenPos:
-	LOAD	CCTurnDirection
-	JZERO	CCEND
-	SUB		One
-	STORE	CCTurnDirection
-	LOAD	DTheta
-	SUB		CCConstant
-	STORE	DTheta
-	JUMP	EvenPos
-EvenNeg:
-	LOAD	CCTurnDirection
-	JZERO	CCEND
-	ADD		One
-	STORE	CCTurnDirection
-	LOAD	DTheta
-	ADD		CCConstant
-	STORE	DTheta
-	JUMP	EvenNeg
-	
-
 IntruderScan:
 	;TO-DO
 	;Handles expected measured distance based on state and "intrudercounter"
@@ -425,27 +282,15 @@ IntruderScan:
 	JZERO	NoScan
 	LOADI	&B00101101
 	OUT		SONAREN
-	IN		DIST2
+	OUT		DIST2
 	STORE	Temp
-	IN		DIST3
+	OUT		DIST3
 	ADD		Temp
 	SHIFT	-1
 	SUB		NoseDistance
 	JPOS	NoIntruderInFrontOfOurNose
 	CALL	IntruderAlert
-	LOADI	0
-	STORE	DVel
-IntruderPause:
-	IN		DIST2
-	STORE	Temp
-	IN		DIST3
-	ADD		Temp
-	SHIFT	-1
-	SUB		NoseDistance
-	JPOS	NoIntruderInFrontOfOurNose
-	JUMP	IntruderPause
 NoIntruderInFrontOfOurNose:
-	
 	LOADI	&B00100001
 	OUT		SONAREN
 	RETURN
@@ -502,9 +347,11 @@ CapVelLow:
 	RETURN
 	MaxVal: DW 510
 
+
 ;***************************************************************
 ;* Subroutines
 ;***************************************************************
+
 StateSwitch:
 	LOAD 	State
 	JZERO 	NorthsideSweep
@@ -543,24 +390,19 @@ BaffleTrigger:
 ;advances state variable. Wraps around back to zero if greater than max size
 StateAdvance:
 	LOAD	State
-	OUT		LCD
 	SUB 	StateMax
-	JZERO	WrapUp
-	JUMP	NoWrap
-WrapUp:
-	LOADI	0
-	JUMP	EndWrap
+	JZERO	NoWrap
+	JUMP	WrapUp
 NoWrap:
 	LOAD 	State
 	ADDI	1
-EndWrap:
+WrapUp:
 	STORE	State
 	RETURN
 
 PreCalc:
 	;TO-DO
 	;calculates minor changes to the arena based on the baffle's vertical position
-	OUT    RESETPOS    ; reset odometer in case wheels moved after programming
 	LOAD	Mask0
 	OUT 	SONAREN
 	IN 		DIST0
@@ -817,7 +659,8 @@ PostCalcWaitCycle:
 	JPOS   PostCalcWaitCycle ; not ready (KEYs are active-low, hence JPOS)
 	LOAD   Zero
 	OUT    XLEDS       ; clear LEDs once ready to continue
-	
+	JUMP	StateSwitch
+
 InitialMovement:
 	IN		Dist3
 	STORE	Temp
@@ -828,17 +671,15 @@ InitialMovement:
 	SUB		Temp
 	JNEG	InitialMovement
 	JZERO	StateSwitch
-	JPOS	StateSwitch
+	JPOS	StateSwitch	
 
-	
-NorthsideSweep:
+	NorthsideSweep:
 	;TO-DO
 	;execute the 180 degree scan above the baffle	
 	; turn left 180 degrees
 	LOADI	&B00100001
 	STORE	SONAREN
 	LOADI	0
-	STORE	CourseCorrectToggle
 	STORE 	DVel
 	LOADI 	360
 	STORE 	DTheta
@@ -846,6 +687,7 @@ NorthsideSweep:
 	CALL	StateAdvance
 	JUMP	StateSwitch
 ;turns to DTheta at DVel based on internal odometry
+
 StillTurning:
 	CALL   GetThetaErr 		; get the heading error
 	CALL   Abs         		; absolute value subroutine
@@ -860,8 +702,6 @@ NorthsideE2W:
 	;Move towards the west wall, execute 90 degree turn(result: facing south) after passing T-Bar edge
 	LOADI	&B00100001
 	OUT		SONAREN
-	LOADI	1
-	STORE	CourseCorrectToggle
 	LOAD	ClockTimer
 	OR		Zero
 	JZERO	TimerSetup
@@ -873,7 +713,6 @@ NPathLoop1:
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	NPathLoop1
 TimerExit:
 	OUT		TIMER
@@ -882,7 +721,6 @@ NPathLoop2:
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	NPathLoop2
 	LOADI	0
 	STORE	DVel ;stahp
@@ -911,8 +749,6 @@ WestsideN2S:
 	;Move south, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
 	LOADI	&B00100001
 	OUT		SONAREN
-	LOADI	1
-	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 WestSideN2SPhase1:
@@ -930,35 +766,24 @@ WestSideN2SPhase1:
 	CALL	IntruderAlert
 WestSideN2SIntruderSkip:
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 WestSideN2SPhase2: ;traverse 48 inches due south
 	LOAD	WestSideN2SCounter
 	OR		Zero
 	JZERO	WestSideN2SPhase2Exit
+	SUB		One
+	STORE	WestSideN2SCounter
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	WestSideN2SPhase2
-	JZERO	WestSideN2STimerDecrement
-	JNEG	WestSideN2STimerDecrement
-WestSideN2STimerDecrement:
-	LOAD	WestSideN2SCounter
-	SUB		One
-	STORE	WestSideN2SCounter
-	JUMP	WestSideN2SPhase2
 WestSideN2SPhase2Exit:
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 WestSideN2SPhase3:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	WestSideN2SPhase3
 	LOADI	0
 	STORE	DVel
@@ -974,29 +799,20 @@ SouthsideW2E:
 	;Move east, follow baffle,  stop after moving ~12 inches past the edge
 	LOADI	&B00100001
 	OUT		SONAREN
-	LOADI	1
-	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 SouthsideE2WLoop:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	SouthsideE2WLoop
-	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 SouthsideE2WLoop2:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	SouthsideE2WLoop2
 	LOADI	0
 	STORE	DVel
@@ -1010,8 +826,6 @@ SouthsideSweep:
 	;Execute 180 degree scan below the baffle
 	LOADI	&B00000001
 	OUT		SONAREN
-	LOADI	0
-	STORE	CourseCorrectToggle
 	LOADI  360
 	STORE  	DTheta
 	CALL	StillTurning
@@ -1024,29 +838,21 @@ SouthsideE2W:
 	;Move towards the west wall, execute 90 degree turn(result: facing north) after passing T-Bar edge
 	LOADI	&B00100001
 	OUT		SONAREN
-	LOADI	1
-	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 SPathLoop1:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	SPathLoop1
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 SPathLoop2:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	SPathLoop2
 	LOADI	0
 	STORE	DVel ;stahp
@@ -1062,12 +868,10 @@ WestsideS2N:
 	;Move north, follow baffle t-bar, execute 90 degree turn(result: facing east) after passing t-bar
 	LOADI	&B00100001
 	OUT		SONAREN
-	LOADI	1
-	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 WestSideS2NPhase1:
-	IN		DIST5 ;load sonar reading again, check if baffle. If not baffle, then intruder
+	IN		DIST0 ;load sonar reading again, check if baffle. If not baffle, then intruder
 	STORE	Temp
 	LOAD	WPathBaffleWall
 	ADDI	100
@@ -1075,41 +879,30 @@ WestSideS2NPhase1:
 	JPOS	WestSideS2NIntruderSkip
 	LOADI	&H724
 	STORE	Temp
-	IN		DIST5
+	IN		DIST0
 	SUB		Temp
 	JPOS	WestSideS2NPhase1
 	CALL	IntruderAlert
 WestSideS2NIntruderSkip:
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
-WestSideS2NPhase2: ;traverse 48 inches due north
+WestSideS2NPhase2: ;traverse 48 inches due south
 	LOAD	WestSideS2NCounter
 	OR		Zero
 	JZERO	WestSideS2NPhase2Exit
+	SUB		One
+	STORE	WestSideS2NCounter
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	WestSideS2NPhase2
-	JZERO	WestSideS2NTimerDecrement
-	JNEG	WestSideS2NTimerDecrement
-WestSideS2NTimerDecrement:
-	LOAD	WestSideS2NCounter
-	SUB		One
-	STORE	WestSideS2NCounter
-	JUMP	WestSideS2NPhase2
 WestSideS2NPhase2Exit:
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 WestSideS2NPhase3:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	WestSideS2NPhase3
 	LOADI	0
 	STORE	DVel
@@ -1126,29 +919,20 @@ NorthsideW2E:
 	;Move south, follow baffle, stop after moving ~12 inches past the edge
 	LOADI	&B00100001
 	OUT		SONAREN
-	LOADI	1
-	STORE	CourseCorrectToggle
 	LOAD	FMid
 	STORE	DVel
 	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 NorthsideW2ELoop:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	NorthsideW2ELoop
-	OUT		TIMER
-	LOADI	0
-	STORE	InteruptTotal
 NorthsideW2ELoop2:
 	IN		TIMER
 	STORE	Temp
 	LOAD	ClockTimer
 	SUB		Temp
-	ADD		InteruptTotal
 	JPOS	NorthsideW2ELoop2
 	LOADI	0
 	STORE	DVel
@@ -1275,9 +1059,6 @@ SecondPower:
 RootTwo:
 	;Setup
 	STORE	InitNum
-	LOADI	0
-	STORE	Root2Counter
-	LOAD	InitNum
 	SHIFT	-2
 	STORE	RootX0 ;use 1/4 IN number as arbitrary positive starting point
 RootRecurse:
@@ -1290,14 +1071,11 @@ RootRecurse:
 	ADD		RootX0 ; + X0
 	SHIFT	-1 ; divide by 2
 	STORE	RootX1
+	AND		RootX0 ; check against previous iteration
+	SUB		RootX0
+	JZERO	RootFinish ; if they're the same, we're done. Otherwise, keep chugging
 	LOAD	RootX1
 	STORE	RootX0
-	LOADI	10
-	SUB		Root2Counter
-	JZERO	RootFinish
-	LOAD	Root2Counter
-	ADDI	1
-	STORE	Root2Counter
 	JUMP	RootRecurse
 RootFinish:
 	LOAD	RootX1
@@ -1305,7 +1083,6 @@ RootFinish:
 InitNum:	DW 0
 RootX1:		DW 0
 RootX0: 	DW 0
-Root2Counter:	DW 0
 ;*******************************************************************************
 ; Mod360: modulo 360
 ; Returns AC%360 in AC
@@ -1777,10 +1554,6 @@ Eight:    DW 8
 Nine:     DW 9
 Ten:      DW 10
 
-CourseCorrectToggle:	DW 0 ;write 0 to disable course correction, 1 to enable. Defaults disabled
-InteruptTimer:			DW 0 ;timer to account for interrupt time
-InteruptTotal:			DW 0
-
 StateMax:
 		DW 7
 SonarInterruptMask:
@@ -1915,7 +1688,8 @@ TBarLowBound:
 		DW &H00CB	;distance to T-Bar wall, lower bound: 8", upper bound: 16", ideal: 12"
 TBarEdgeLowBound:	
 		DW &H00CB	;distance to T-Bar end, lower bound: 8", upper bound: 16", ideal: 12"
-
+StartingWWall:
+		DW &H803
 
 
 
